@@ -6,7 +6,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 @Data @TableName("t_task")
 public class Task{
- @TableId private Long id;
+ @TableId
+ private Long id;
  private Long courseId;
  private String title,type,description,submitType;
  private LocalDateTime deadline;

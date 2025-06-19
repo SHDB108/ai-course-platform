@@ -9,6 +9,9 @@ spring:
     redis:
       host: localhost
       port: 6379
-  mybatis-plus:
-    configuration:
-      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+storage:
+  type: local
+  local-path: upload
