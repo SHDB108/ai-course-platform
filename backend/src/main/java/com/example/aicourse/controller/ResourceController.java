@@ -24,11 +24,11 @@ public class ResourceController {
     ResourceMapper mapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public com.example.aicourse.util.Result<Long> upload(@RequestPart MultipartFile file) throws IOException {
+    public com.example.aicourse.utils.Result<Long> upload(@RequestPart MultipartFile file) throws IOException {
         String path = storageService.upload(file);
         ResourceEntity entity = new ResourceEntity(file.getOriginalFilename(), path, detectType(file), file.getSize(), currentUserId());
         mapper.insert(entity);
-        return com.example.aicourse.util.Result.ok(entity.getId());
+        return com.example.aicourse.utils.Result.ok(entity.getId());
     }
 
     @GetMapping("/{id}/download")

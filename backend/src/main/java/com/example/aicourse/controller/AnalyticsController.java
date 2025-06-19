@@ -21,8 +21,8 @@ public class AnalyticsController {
     AnalyticsService service;
 
     @GetMapping("/course/{courseId}/trend")
-    public com.example.aicourse.util.Result<List<TrendPointVO>> trend(@PathVariable Long courseId){
-        return com.example.aicourse.util.Result.ok(service.getTrend(courseId));   // 返回折线图所需数据
+    public com.example.aicourse.utils.Result<List<TrendPointVO>> trend(@PathVariable Long courseId){
+        return com.example.aicourse.utils.Result.ok(service.getTrend(courseId));   // 返回折线图所需数据
     }
 
     @GetMapping("/course/{courseId}/export")

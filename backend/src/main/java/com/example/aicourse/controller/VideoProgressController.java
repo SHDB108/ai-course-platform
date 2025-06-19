@@ -12,9 +12,9 @@ public class VideoProgressController {
     VideoProgressService service;
 
     @PostMapping("/{resId}/progress")
-    public com.example.aicourse.util.Result<Void> report(@PathVariable Long resId, @RequestBody ProgressDTO dto) {
+    public com.example.aicourse.utils.Result<Void> report(@PathVariable Long resId, @RequestBody ProgressDTO dto) {
         service.record(resId, currentUserId(), dto);
-        return com.example.aicourse.util.Result.ok();
+        return com.example.aicourse.utils.Result.ok();
     }
 
     /**
