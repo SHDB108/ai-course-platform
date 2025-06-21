@@ -1,5 +1,7 @@
 package com.example.aicourse.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -20,5 +22,9 @@ public class QuizSubmission {
     private LocalDateTime submitAt;
     private BigDecimal score;
     private String answers;      // JSON 序列化的答案
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime gmtCreate;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime gmtModified;
 }
