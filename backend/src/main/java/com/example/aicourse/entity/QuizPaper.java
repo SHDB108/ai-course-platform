@@ -21,6 +21,9 @@ public class QuizPaper {
     private Long courseId;
     private String title;
     private BigDecimal totalScore;
+    private Integer durationMinutes;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime gmtCreate;

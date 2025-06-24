@@ -14,18 +14,19 @@ import java.time.LocalDateTime;
 @TableName("t_resource")
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class ResourceEntity {
     @TableId
-    private Long id;
-    private String filename;
-    private String path;
-    private String type;
-    private Long size;
-    private Long uploaderId;
+    private Long id; //
+    private String filename; //
+    private String path; //
+    private String type; //
+    private Long size; //
+    private Long uploaderId; //
+    private Long courseId;
+    private String description;
 
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime gmtCreate;
+    private LocalDateTime gmtCreate; //
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime gmtModified;
@@ -36,6 +37,5 @@ public class ResourceEntity {
         this.type = type;
         this.size = size;
         this.uploaderId = uploaderId;
-        this.gmtCreate = LocalDateTime.now();
     }
 }

@@ -9,19 +9,20 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("t_video_progress")
-public class VideoProgress {
+@TableName("t_teacher")
+public class Teacher {
     @TableId
-    private Long id; //
-    private Long resourceId; //
-    private Long studentId; //
-    private String progress; // JSON: {"elapsed":120,"segments":[[0,30],[90,120]]}
-    private Integer completion; // 0–100
-    private LocalDateTime lastViewTime;
+    private Long id; // Can be the same as userId
+    private String teacherNo;
+    private String name;
+    private String department;
+    private String title;
+    private String phone;
+    private String email;
 
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime gmtCreate; //
+    private LocalDateTime gmtCreate;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime gmtModified; //
+    private LocalDateTime gmtModified;
 }

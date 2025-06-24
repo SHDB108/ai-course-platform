@@ -7,19 +7,23 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 @Data
 @TableName("t_task_submission")
-
-
-public class TaskSubmission{
+public class TaskSubmission {
  @TableId
  private Long id;
- private Long taskId,studentId;
+ private Long taskId;
+ private Long studentId;
  private String status;
- private Double score;
+ private BigDecimal score;
  private LocalDateTime submittedAt;
  private String answerPath;
+ private Long graderId;
+ private LocalDateTime gradeTime;
+ private String feedback;
 
  @TableField(fill = FieldFill.INSERT)
  private LocalDateTime gmtCreate;

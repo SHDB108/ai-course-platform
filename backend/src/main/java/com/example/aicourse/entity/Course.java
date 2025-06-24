@@ -3,6 +3,7 @@ package com.example.aicourse.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data @TableName("t_course")
@@ -12,7 +13,7 @@ public class Course{
  private Long id;
 
  private String courseCode,courseName;
- private Double credit;
+ private BigDecimal credit;
  private Integer hours;
  private Long teacherId;
 

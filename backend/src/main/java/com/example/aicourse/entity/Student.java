@@ -13,7 +13,7 @@ public class Student{
  @TableId
  private Long id;
  private String stuNo,name;
- private Integer gender;
+ private Integer gender; //0为女，1为男
  private String major,grade,phone,email;
 
  @TableField(fill = FieldFill.INSERT)

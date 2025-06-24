@@ -5,24 +5,20 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
-@TableName("t_quiz_submission")
-public class QuizSubmission {
+@TableName("t_learning_recommendation")
+public class LearningRecommendation {
     @TableId
     private Long id;
-    private Long paperId;
     private Long studentId;
-    private LocalDateTime startAt;
-    private LocalDateTime submitAt;
-    private BigDecimal score;
-    private String answers;      // JSON 序列化的答案
-    private String status;
+    private Long courseId;
+    private String recommendationType; // e.g., 'KNOWLEDGE_POINT', 'REVIEW_MATERIAL'
+    private Long targetId;
+    private String reason;
+    private Integer isDismissed; // 0=false, 1=true
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime gmtCreate;

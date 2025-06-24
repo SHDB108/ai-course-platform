@@ -13,16 +13,18 @@ import java.util.List;
 @TableName("t_question")
 public class Question {
     @TableId
-    private Long id;
-    private Long courseId;
-    private String stem;
+    private Long id; //
+    private Long courseId; //
+    private String stem; //
     private String type; // SC|MC|TF|FILL|SA|CODE
     private Integer difficulty; // 1~5
-    private String knowledge;
-    private String answer;
-    private Long creatorId;
+    private String knowledge; //
+    private String answer; // For non-choice questions
+    private Long creatorId; //
+    private String analysis; // Question analysis/hint
+
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime gmtCreate;
+    private LocalDateTime gmtCreate; //
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime gmtModified;

@@ -11,5 +11,5 @@ public class QuestionOption {
     private Long id;
     private Long questionId;
     private String content;
-    private Boolean isCorrect;
+    private Boolean isCorrect; //0为正确选项， 1为错误选项
 }
