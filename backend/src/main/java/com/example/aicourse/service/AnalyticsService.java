@@ -1,6 +1,6 @@
 package com.example.aicourse.service;
 
-import com.example.aicourse.vo.TrendPointVO;
+import com.example.aicourse.vo.course.TrendPointVO;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 

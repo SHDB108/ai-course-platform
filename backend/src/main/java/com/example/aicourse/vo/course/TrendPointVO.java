@@ -1,4 +1,4 @@
-package com.example.aicourse.vo;
+package com.example.aicourse.vo.course;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

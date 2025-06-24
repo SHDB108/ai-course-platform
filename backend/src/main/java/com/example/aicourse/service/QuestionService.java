@@ -1,7 +1,7 @@
 package com.example.aicourse.service;
 
-import com.example.aicourse.dto.QuestionDTO;
-import com.example.aicourse.vo.QuestionVO;
+import com.example.aicourse.dto.paper.QuestionDTO;
+import com.example.aicourse.vo.paper.QuestionVO;
 import java.util.List;
 
 public interface QuestionService {

@@ -1,7 +1,7 @@
 package com.example.aicourse.repository;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.aicourse.entity.TaskSubmission;
-import com.example.aicourse.vo.TrendPointVO;
+import com.example.aicourse.vo.course.TrendPointVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

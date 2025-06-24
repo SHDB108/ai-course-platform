@@ -1,9 +1,8 @@
-package com.example.aicourse.dto;
+package com.example.aicourse.dto.resource;
 
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 前端上报的视频播放进度结构

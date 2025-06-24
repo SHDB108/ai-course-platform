@@ -1,6 +1,6 @@
 package com.example.aicourse.service.impl;
 
-import com.example.aicourse.dto.ProgressDTO;
+import com.example.aicourse.dto.resource.ProgressDTO;
 import com.example.aicourse.entity.VideoProgress;
 import com.example.aicourse.repository.VideoProgressMapper;
 import com.example.aicourse.service.VideoProgressService;

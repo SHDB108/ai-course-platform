@@ -1,4 +1,4 @@
-package com.example.aicourse.dto;
+package com.example.aicourse.dto.paper;
 
 import lombok.Data;
 import jakarta.validation.constraints.NotBlank;

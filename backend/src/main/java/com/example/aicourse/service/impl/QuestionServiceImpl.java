@@ -1,14 +1,14 @@
 package com.example.aicourse.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.aicourse.dto.OptionDTO;
-import com.example.aicourse.dto.QuestionDTO;
+import com.example.aicourse.dto.paper.OptionDTO;
+import com.example.aicourse.dto.paper.QuestionDTO;
 import com.example.aicourse.entity.Question;
 import com.example.aicourse.entity.QuestionOption;
 import com.example.aicourse.repository.QuestionMapper;
 import com.example.aicourse.repository.QuestionOptionMapper;
 import com.example.aicourse.service.QuestionService;
-import com.example.aicourse.vo.QuestionVO;
+import com.example.aicourse.vo.paper.QuestionVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.example.aicourse.vo;
+package com.example.aicourse.vo.paper;
 
 import com.example.aicourse.entity.QuestionOption;
 import lombok.Data;

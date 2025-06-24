@@ -1,7 +1,7 @@
 package com.example.aicourse.controller;
 
 import com.example.aicourse.service.AnalyticsService;
-import com.example.aicourse.vo.TrendPointVO;
+import com.example.aicourse.vo.course.TrendPointVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;

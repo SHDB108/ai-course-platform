@@ -1,6 +1,6 @@
 package com.example.aicourse.controller;
 
-import com.example.aicourse.dto.ProgressDTO;
+import com.example.aicourse.dto.resource.ProgressDTO;
 import com.example.aicourse.service.VideoProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

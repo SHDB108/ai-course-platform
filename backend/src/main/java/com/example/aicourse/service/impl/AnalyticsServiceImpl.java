@@ -3,7 +3,7 @@ package com.example.aicourse.service.impl;
 import com.example.aicourse.repository.QuizSubmissionMapper;
 import com.example.aicourse.repository.TaskSubmissionMapper;
 import com.example.aicourse.service.AnalyticsService;
-import com.example.aicourse.vo.TrendPointVO;
+import com.example.aicourse.vo.course.TrendPointVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -12,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
