@@ -119,11 +119,10 @@ public class QuizSubmissionServiceImpl implements QuizSubmissionService {
         return vo;
     }
 
-    @Async // 将此方法标记为异步执行
+    @Async
     @Override
     @Transactional
     public void gradeSubmission(Long id, QuizGradeDTO dto) {
-        // 在异步方法中，最好重新获取实体以确保事务边界和数据一致性
         QuizSubmission submission = submissionMapper.selectById(id);
         if (submission == null) {
             System.err.println("异步批改失败：提交记录不存在: " + id);
@@ -150,7 +149,6 @@ public class QuizSubmissionServiceImpl implements QuizSubmissionService {
      * @return 自动计算出的分数
      */
     private BigDecimal performAutoGrading(QuizSubmission submission) {
-        // ... (此方法内容与上一轮回复中提供的完全相同，此处省略以保持简洁)
         // 1. 获取学生答案
         Map<Long, String> studentAnswers;
         try {

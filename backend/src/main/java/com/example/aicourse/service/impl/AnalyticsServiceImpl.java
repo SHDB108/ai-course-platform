@@ -45,9 +45,10 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final QuestionMapper questionMapper;
     private final QuestionOptionMapper optionMapper;
     private final ObjectMapper objectMapper;
+    private final CourseEnrollmentMapper courseEnrollmentMapper;
 
     @Autowired
-    public AnalyticsServiceImpl(TaskSubmissionMapper tsMapper, QuizSubmissionMapper qsMapper, TaskMapper taskMapper, StudentMapper studentMapper, QuizPaperMapper paperMapper, CourseMapper courseMapper, KnowledgePointMapper knowledgePointMapper, QuestionMapper questionMapper, QuestionOptionMapper optionMapper, ObjectMapper objectMapper) {
+    public AnalyticsServiceImpl(TaskSubmissionMapper tsMapper, QuizSubmissionMapper qsMapper, TaskMapper taskMapper, StudentMapper studentMapper, QuizPaperMapper paperMapper, CourseMapper courseMapper, KnowledgePointMapper knowledgePointMapper, QuestionMapper questionMapper, QuestionOptionMapper optionMapper, ObjectMapper objectMapper, CourseEnrollmentMapper courseEnrollmentMapper) {
         this.tsMapper = tsMapper;
         this.qsMapper = qsMapper;
         this.taskMapper = taskMapper;
@@ -58,6 +59,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         this.questionMapper = questionMapper;
         this.optionMapper = optionMapper;
         this.objectMapper = objectMapper;
+        this.courseEnrollmentMapper = courseEnrollmentMapper;
     }
 
 
@@ -105,11 +107,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public Page<CourseStudentScoreVO> getCourseStudentScores(Long courseId, Page<CourseStudentScoreVO> page) {
-        //Todo
-        // 目前查询系统中所有学生，迭代加入course_enrollment表来查询特定课程下的学生
-
-        // 1. 分页查询学生
-        Page<Student> studentPage = studentMapper.selectPage(new Page<>(page.getCurrent(), page.getSize()), null);
+        // 1. 分页查询已选修该课程的学生
+        Page<Student> studentPage = studentMapper.selectStudentsByCourse(new Page<>(page.getCurrent(), page.getSize()), courseId);
         List<Student> studentsOnPage = studentPage.getRecords();
 
         if (CollectionUtils.isEmpty(studentsOnPage)) {
@@ -118,13 +117,13 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         List<Long> studentIds = studentsOnPage.stream().map(Student::getId).collect(Collectors.toList());
 
-        // 2. 批量获取本课程所有任务和测验的ID
+        // 2. 批量获取本课程所有任务和测验的ID (逻辑无变化)
         List<Long> taskIds = taskMapper.selectList(Wrappers.<Task>lambdaQuery().eq(Task::getCourseId, courseId))
                 .stream().map(Task::getId).toList();
         List<Long> paperIds = paperMapper.selectList(Wrappers.<QuizPaper>lambdaQuery().eq(QuizPaper::getCourseId, courseId))
                 .stream().map(QuizPaper::getId).toList();
 
-        // 3. 批量获取分页学生在这些任务和测验中的所有提交记录
+        // 3. 批量获取分页学生在这些任务和测验中的所有提交记录 (逻辑无变化)
         Map<Long, List<TaskSubmission>> taskSubmissionsMap = Collections.emptyMap();
         if (!CollectionUtils.isEmpty(taskIds)) {
             taskSubmissionsMap = tsMapper.selectList(Wrappers.<TaskSubmission>lambdaQuery()
@@ -186,20 +185,20 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public List<TaskCompletionSummaryVO> getTaskCompletionSummary(Long courseId) {
-        // 1. 调用自定义SQL查询，获取基础的统计数据
+        // 1. 调用自定义SQL查询，获取基础的统计数据 (逻辑无变化)
         List<TaskCompletionSummaryVO> summaryList = taskMapper.selectTaskCompletionSummary(courseId);
 
         // 2. 获取课程总人数，用于计算比率
-        //Todo
-        // 注意：这里获取的是系统中所有学生的数量，这是一个临时的简化实现。
-        // 在理想模型中，应该有一个课程-学生关联表来精确获取某门课的报名人数。
-        long totalStudents = studentMapper.selectCount(null);
+        long totalStudents = courseEnrollmentMapper.selectCount(
+                Wrappers.<CourseEnrollment>lambdaQuery().eq(CourseEnrollment::getCourseId, courseId)
+        );
+
         if (totalStudents == 0) {
             // 如果没有学生，直接返回空列表，避免除零错误
             return Collections.emptyList();
         }
 
-        // 3. 遍历列表，计算并填充完成率和准时率
+        // 3. 遍历列表，计算并填充完成率和准时率 (逻辑无变化)
         for (TaskCompletionSummaryVO summary : summaryList) {
             summary.setTotalStudents((int) totalStudents);
 
