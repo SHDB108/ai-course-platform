@@ -34,4 +34,13 @@ public class LocalStorageServiceImpl implements StorageService {
     public Resource load(String path) {
         return new FileSystemResource(prop.getLocalPath().resolve(path));
     }
+
+    @Override
+    public void delete(String path) throws IOException {
+        if (path == null || path.isBlank()) {
+            return;
+        }
+        Path fileToDelete = prop.getLocalPath().resolve(path);
+        Files.deleteIfExists(fileToDelete);
+    }
 }
