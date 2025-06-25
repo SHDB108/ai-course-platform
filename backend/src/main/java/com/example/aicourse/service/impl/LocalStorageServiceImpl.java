@@ -18,9 +18,12 @@ import java.util.UUID;
 @ConditionalOnProperty(name="storage.type", havingValue="local", matchIfMissing=true)
 public class LocalStorageServiceImpl implements StorageService {
 
-    @Autowired
-    private StorageProperties prop;
+    private final StorageProperties prop;
 
+    @Autowired
+    public LocalStorageServiceImpl(StorageProperties prop) {
+        this.prop = prop;
+    }
     @Override
     public String upload(MultipartFile file) throws IOException {
         Files.createDirectories(prop.getLocalPath());
@@ -33,5 +36,14 @@ public class LocalStorageServiceImpl implements StorageService {
     @Override
     public Resource load(String path) {
         return new FileSystemResource(prop.getLocalPath().resolve(path));
+    }
+
+    @Override
+    public void delete(String path) throws IOException {
+        if (path == null || path.isBlank()) {
+            return;
+        }
+        Path fileToDelete = prop.getLocalPath().resolve(path);
+        Files.deleteIfExists(fileToDelete);
     }
 }

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -14,12 +15,13 @@ import java.time.LocalDateTime;
 @TableName("t_resource")
 @NoArgsConstructor
 @AllArgsConstructor
+@Setter
 public class ResourceEntity {
     @TableId
     private Long id; //
     private String filename; //
     private String path; //
-    private String type; //
+    private ResourceType type; //
     private Long size; //
     private Long uploaderId; //
     private Long courseId;
@@ -30,12 +32,4 @@ public class ResourceEntity {
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime gmtModified;
-
-    public ResourceEntity(String filename, String path, String type, Long size, Long uploaderId) {
-        this.filename = filename;
-        this.path = path;
-        this.type = type;
-        this.size = size;
-        this.uploaderId = uploaderId;
-    }
 }
