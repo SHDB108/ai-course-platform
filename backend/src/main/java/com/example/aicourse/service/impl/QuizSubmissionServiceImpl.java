@@ -5,9 +5,11 @@ import com.example.aicourse.dto.quiz.QuizGradeDTO;
 import com.example.aicourse.dto.quiz.QuizSubmissionDTO;
 import com.example.aicourse.entity.*;
 import com.example.aicourse.repository.*;
+import com.example.aicourse.service.IntelligentGradingService;
 import com.example.aicourse.service.QuizSubmissionService;
 import com.example.aicourse.vo.quiz.QuizSubmissionDetailVO;
 import com.example.aicourse.vo.quiz.QuizSubmissionVO;
+import com.example.aicourse.vo.task.IntelligentGradeResultVO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,11 +39,12 @@ public class QuizSubmissionServiceImpl implements QuizSubmissionService {
     private final QuizPaperQuestionMapper paperQuestionMapper;
     private final QuestionOptionMapper optionMapper;
     private final ObjectMapper objectMapper;
+    private final IntelligentGradingService intelligentGradingService;
 
     private final QuizSubmissionService self;
 
     @Autowired
-    public QuizSubmissionServiceImpl(@Lazy QuizSubmissionService self, QuizSubmissionMapper submissionMapper, QuizPaperMapper paperMapper, StudentMapper studentMapper, QuestionMapper questionMapper, QuizPaperQuestionMapper paperQuestionMapper, QuestionOptionMapper optionMapper, ObjectMapper objectMapper) {
+    public QuizSubmissionServiceImpl(@Lazy QuizSubmissionService self, QuizSubmissionMapper submissionMapper, QuizPaperMapper paperMapper, StudentMapper studentMapper, QuestionMapper questionMapper, QuizPaperQuestionMapper paperQuestionMapper, QuestionOptionMapper optionMapper, ObjectMapper objectMapper, IntelligentGradingService intelligentGradingService) {
         this.self = self;
         this.submissionMapper = submissionMapper;
         this.paperMapper = paperMapper;
@@ -49,6 +52,7 @@ public class QuizSubmissionServiceImpl implements QuizSubmissionService {
         this.questionMapper = questionMapper;
         this.paperQuestionMapper = paperQuestionMapper;
         this.optionMapper = optionMapper;
+        this.intelligentGradingService = intelligentGradingService;
         this.objectMapper = objectMapper;
     }
 
@@ -191,7 +195,19 @@ public class QuizSubmissionServiceImpl implements QuizSubmissionService {
             }
 
             String type = question.getType();
-            if ("SC".equals(type)) {
+            if ("SA".equals(type) || "FILL".equals(type)) { // 对简答题和填空题进行智能批改
+                String referenceAnswer = question.getAnswer();
+                if (referenceAnswer != null && !referenceAnswer.isBlank()) {
+                    // 调用智能批改服务
+                    IntelligentGradeResultVO gradeResult = intelligentGradingService.gradeShortAnswer(studentAnswerStr, referenceAnswer);
+                    BigDecimal scoreFromAI = gradeResult.getScore(); // AI返回的是0-100的得分率
+
+                    // 将得分率转换为该题的实际分数
+                    BigDecimal questionScore = pq.getScore();
+                    double finalQuestionScore = scoreFromAI.doubleValue() / 100.0 * questionScore.doubleValue();
+                    totalScore += finalQuestionScore;
+                }
+            } else if ("SC".equals(type)) { // 单选题逻辑
                 List<QuestionOption> options = optionsMap.get(questionId);
                 if (options == null) continue;
 
@@ -204,7 +220,7 @@ public class QuizSubmissionServiceImpl implements QuizSubmissionService {
                 if (correctOptionId != null && studentAnswerStr.equals(String.valueOf(correctOptionId))) {
                     totalScore += pq.getScore().doubleValue();
                 }
-            } else if ("MC".equals(type)) {
+            } else if ("MC".equals(type)) { // 多选题逻辑
                 List<QuestionOption> options = optionsMap.get(questionId);
                 if (options == null) continue;
 

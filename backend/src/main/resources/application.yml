@@ -15,3 +15,9 @@ mybatis-plus:
 storage:
   type: local
   local-path: upload
+
+llm:
+  dify:
+    api-url: "http://localhost/v1"
+    api-key: "app-SKDG1Ww8x4Rw4js6WsSuRKYI"
+    model: "deepseek-r1:1.5b"

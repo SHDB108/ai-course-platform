@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class TaskSubmission {
  @TableId
  private Long id;
+
  private Long taskId;
  private Long studentId;
  private String status;

@@ -45,7 +45,6 @@ public class QuestionServiceImpl implements QuestionService {
     public Long create(QuestionDTO dto) {
         Question q = new Question();
         BeanUtils.copyProperties(dto, q);
-        // 如果知识点是列表，合并为字符串存储
         if (dto.getKnowledge() != null) {
             q.setKnowledge(String.join(",", dto.getKnowledge()));
         }
