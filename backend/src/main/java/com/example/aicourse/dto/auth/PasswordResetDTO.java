@@ -8,10 +8,10 @@ import lombok.Data;
  */
 @Data
 public class PasswordResetDTO {
-    @NotBlank
+    @NotBlank(message = "标识符不能为空")
     private String identifier;
-    @NotBlank
-    private String verificationCode;
-    @NotBlank
+    @NotBlank(message = "验证码不能为空")
+    private String verificationCode; // 或 "resetToken"
+    @NotBlank(message = "新密码不能为空")
     private String newPassword;
 }

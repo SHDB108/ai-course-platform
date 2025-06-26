@@ -9,18 +9,19 @@ import lombok.Data;
  */
 @Data
 public class StudentRegisterDTO {
-    @NotBlank
+    @NotBlank(message = "用户名不能为空")
     private String username;
-    @NotBlank
+    @NotBlank(message = "密码不能为空")
     private String password;
-    @NotBlank
+    @NotBlank(message = "学号不能为空")
     private String stuNo;
-    @NotBlank
+    @NotBlank(message = "姓名不能为空")
     private String name;
-    private Integer gender;
+    // 性别字段不强制要求NotBlank，因为0或1是有效值
+    private Integer gender; // 0=女, 1=男
     private String major;
     private String grade;
     private String phone;
-    @Email
+    @Email(message = "邮箱格式不正确")
     private String email;
 }

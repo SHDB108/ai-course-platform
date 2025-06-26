@@ -5,6 +5,7 @@ import lombok.Data;
 
 /**
  * API 3.1 & 3.2 学生信息响应
+ * 新增用户相关字段以匹配API 4.8的需求
  */
 @Data
 public class StudentVO {
@@ -17,4 +18,10 @@ public class StudentVO {
     private String phone;
     private String email;
     private LocalDateTime gmtCreate;
+
+    // ====== 新增字段以从User实体填充 ======
+    private String username; // 用户名
+    private String role;     // 用户角色
+    private Integer status;  // 用户状态
+    // ======================================
 }
