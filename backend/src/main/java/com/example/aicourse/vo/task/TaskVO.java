@@ -18,5 +18,6 @@ public class TaskVO {
     private String submitType;
     private Long creatorId;
     private BigDecimal maxScore;
+    private String status; // 新增：任务状态，如 'DRAFT', 'PUBLISHED', 'ARCHIVED'
     private LocalDateTime gmtCreate;
 }

@@ -8,6 +8,6 @@ import lombok.Data;
  */
 @Data
 public class UserStatusUpdateDTO {
-    @NotNull
+    @NotNull(message = "用户状态不能为空")
     private Integer status; // 0=禁用, 1=启用
 }

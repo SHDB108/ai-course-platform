@@ -18,8 +18,7 @@ public class ScoreController{
  }
 
  @GetMapping("/{courseId}/trend")
-
  public List<TaskSubmission> trend(
-         @PathVariable Long courseId){return srv.lambdaQuery().like(TaskSubmission::getTaskId,courseId).list();
-  }
+         @PathVariable Long courseId){return srv.lambdaQuery().eq(TaskSubmission::getTaskId,courseId).list();
+ }
 }

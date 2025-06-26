@@ -1,6 +1,5 @@
 package com.example.aicourse.dto.course;
 
-import java.math.BigDecimal;
 import lombok.Data;
 
 /**
@@ -8,11 +7,14 @@ import lombok.Data;
  */
 @Data
 public class CourseUpdateDTO {
-    private String courseCode;
+    private String courseCode; // 新增此字段以匹配 ServiceImpl 中的逻辑
     private String courseName;
-    private BigDecimal credit;
-    private Integer hours;
-    private Long teacherId;
     private String description;
-    private String prerequisites;
+    private Integer credits;
+    private String semester;
+    private String department;
+    private Integer capacity;
+    private Long teacherId;
+    private String classroom;
+    private String scheduleTime;
 }

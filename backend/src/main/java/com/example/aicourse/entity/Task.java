@@ -1,4 +1,3 @@
-
 package com.example.aicourse.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -17,6 +16,7 @@ public class Task{
  private LocalDateTime deadline;
  private Long creatorId;
  private BigDecimal maxScore;
+ private String status; // 新增：任务状态，如 'DRAFT', 'PUBLISHED', 'ARCHIVED'
 
  @TableField(fill = FieldFill.INSERT)
  private LocalDateTime gmtCreate;
