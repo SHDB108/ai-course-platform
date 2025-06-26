@@ -56,7 +56,6 @@ public class IntelligentGradingServiceImpl implements IntelligentGradingService 
             log.info("异步智能批改完成，提交ID: {}, 分数: {}", submissionId, resultVO.getScore());
         } catch (Exception e) {
             log.error("异步智能批改失败，提交ID: {}", submissionId, e);
-            // 异常处理：可以更新任务状态为“批改失败”等
             TaskSubmission submission = submissionMapper.selectById(submissionId);
             if (submission != null) {
                 submission.setFeedback("AI批改时发生内部错误：" + e.getMessage());
