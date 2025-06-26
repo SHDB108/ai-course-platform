@@ -14,6 +14,7 @@ import com.example.aicourse.entity.TaskSubmission;
 import com.example.aicourse.repository.StudentMapper; // 导入 StudentMapper
 import com.example.aicourse.repository.TaskMapper; // 导入 TaskMapper
 import com.example.aicourse.repository.TaskSubmissionMapper;
+import com.example.aicourse.service.IntelligentGradingService;
 import com.example.aicourse.service.StorageService; // 导入 StorageService
 import com.example.aicourse.service.TaskSubmissionService;
 import com.example.aicourse.utils.Result;
@@ -25,25 +26,39 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.aicourse.service.IntelligentGradingService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service public class TaskSubmissionServiceImpl extends ServiceImpl<TaskSubmissionMapper,TaskSubmission> implements TaskSubmissionService{
 
+    private final TaskSubmissionMapper taskSubmissionMapper; // 显式注入 mapper
+
+    private final TaskMapper taskMapper; // 用于查询任务信息
+
+    private final StudentMapper studentMapper; // 用于查询学生信息
+
+    private final StorageService storageService; // 用于文件上传
+
+    private final IntelligentGradingService intelligentGradingService;
+
     @Autowired
-    private TaskSubmissionMapper taskSubmissionMapper; // 显式注入 mapper
-    @Autowired
-    private TaskMapper taskMapper; // 用于查询任务信息
-    @Autowired
-    private StudentMapper studentMapper; // 用于查询学生信息
-    @Autowired
-    private StorageService storageService; // 用于文件上传
+    public TaskSubmissionServiceImpl(TaskSubmissionMapper taskSubmissionMapper, TaskMapper taskMapper,
+                                     StudentMapper studentMapper, StorageService storageService,
+                                     IntelligentGradingService intelligentGradingService) { // 3. 在构造函数中注入
+        this.taskSubmissionMapper = taskSubmissionMapper;
+        this.taskMapper = taskMapper;
+        this.studentMapper = studentMapper;
+        this.storageService = storageService;
+        this.intelligentGradingService = intelligentGradingService; // 4. 完成注入
+    }
 
     /**
      * [内部方法] 获取当前用户ID的占位实现 (与AuthServiceImpl中相同，可在通用Util中管理)
@@ -151,7 +166,7 @@ import java.util.stream.Collectors;
                     vo.setTaskTitle(task.getTitle()); // 填充任务标题
                     return vo;
                 })
-                .filter(java.util.Objects::nonNull) // 过滤掉 null
+                .filter(Objects::nonNull) // 过滤掉 null
                 .collect(Collectors.toList());
     }
 
@@ -263,35 +278,8 @@ import java.util.stream.Collectors;
      */
     @Override
     public IntelligentGradeResultVO intelligentGrade(Long submissionId, IntelligentGradeRequestDTO dto) {
-        TaskSubmission submission = taskSubmissionMapper.selectById(submissionId);
-        if (submission == null) {
-            throw new RuntimeException("任务提交记录不存在");
-        }
-
-        // TODO: 实际业务中，这里会调用一个大语言模型（LLM）API
-        // 例如：通过 RestTemplate/WebClient 调用外部 AI 服务，传入报告内容（通过 answerPath 获取）
-        // 和 gradingRules, llmModel 等参数。
-        // 并根据LLM返回的结果填充 score, feedback, suggestions。
-
-        System.out.println("模拟智能批改：任务提交ID " + submissionId);
-        System.out.println("批改规则: " + dto.getGradingRules());
-        System.out.println("LLM 模型: " + dto.getLlmModel());
-        System.out.println("报告路径/内容: " + submission.getAnswerPath());
-
-        // 模拟智能批改结果
-        IntelligentGradeResultVO resultVO = new IntelligentGradeResultVO();
-        resultVO.setScore(new BigDecimal("88.0")); // 模拟得分
-        resultVO.setFeedback("模拟反馈：报告结构清晰，但在某些论点上可以提供更深入的分析。");
-        resultVO.setSuggestions(List.of("增加数据支持", "引用更多权威文献", "重新组织第三段的论证逻辑"));
-
-        // (可选) 智能批改后，可以自动更新任务提交的得分和反馈
-        // submission.setScore(resultVO.getScore());
-        // submission.setFeedback(resultVO.getFeedback());
-        // submission.setGraderId(currentUserId()); // 假设批改人是触发智能批改的用户
-        // submission.setGradeTime(LocalDateTime.now());
-        // submission.setStatus("GRADED");
-        // taskSubmissionMapper.updateById(submission);
-
-        return resultVO;
+        // 直接将请求委托给 IntelligentGradingService 的同步方法处理
+        // 因为本API需要立即返回批改结果
+        return intelligentGradingService.gradeSubmissionSync(submissionId, dto);
     }
 }

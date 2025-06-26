@@ -5,45 +5,30 @@ import com.example.aicourse.dto.task.IntelligentGradeRequestDTO;
 import com.example.aicourse.entity.TaskSubmission;
 import com.example.aicourse.repository.TaskSubmissionMapper;
 import com.example.aicourse.service.IntelligentGradingService;
+import com.example.aicourse.service.LlmService;
 import com.example.aicourse.utils.TextExtractor;
 import com.example.aicourse.vo.task.IntelligentGradeResultVO;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
 public class IntelligentGradingServiceImpl implements IntelligentGradingService {
 
     private final TaskSubmissionMapper submissionMapper;
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
     private final StorageProperties storageProperties;
-
-    @Value("${llm.dify.api-url}")
-    private String difyApiUrl;
-
-    @Value("${llm.dify.model}")
-    private String difyModel;
+    private final LlmService llmService; // 【优化】依赖抽象的LlmService
 
     @Autowired
-    public IntelligentGradingServiceImpl(TaskSubmissionMapper submissionMapper, RestTemplate restTemplate, ObjectMapper objectMapper, StorageProperties storageProperties) {
+    public IntelligentGradingServiceImpl(TaskSubmissionMapper submissionMapper, StorageProperties storageProperties, LlmService llmService) {
         this.submissionMapper = submissionMapper;
-        this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
         this.storageProperties = storageProperties;
+        this.llmService = llmService;
     }
 
     @Async
@@ -58,7 +43,7 @@ public class IntelligentGradingServiceImpl implements IntelligentGradingService 
             log.error("异步智能批改失败，提交ID: {}", submissionId, e);
             TaskSubmission submission = submissionMapper.selectById(submissionId);
             if (submission != null) {
-                submission.setFeedback("AI批改时发生内部错误：" + e.getMessage());
+                submission.setFeedback("AI批改时发生内部错误: " + e.getMessage());
                 submission.setStatus("Grading Failed");
                 submissionMapper.updateById(submission);
             }
@@ -84,19 +69,15 @@ public class IntelligentGradingServiceImpl implements IntelligentGradingService 
         // 3. 构建 Prompt
         String prompt = buildGradingPrompt(studentReportText, request.getGradingRules());
 
-        // 4. 调用 LLM
-        String llmResponseJson = callLlmApi(prompt);
+        // 4. 【优化】调用LlmService并解析响应
+        IntelligentGradeResultVO resultVO = llmService.generateJson(prompt, IntelligentGradeResultVO.class);
 
-        // 5. 解析 LLM 的响应
-        IntelligentGradeResultVO resultVO = parseLlmResponse(llmResponseJson);
-
-        // 6. 将结果保存回数据库
+        // 5. 将结果保存回数据库
         submission.setScore(resultVO.getScore());
-        submission.setFeedback(resultVO.getFeedback()); // 将AI的综合评语作为反馈
-        // 假设graderId为0代表AI批改
-        submission.setGraderId(0L);
+        submission.setFeedback(resultVO.getFeedback());
+        submission.setGraderId(0L); // 0 代表AI批改
         submission.setGradeTime(java.time.LocalDateTime.now());
-        submission.setStatus("GRADED"); // 更新状态为“已批改”
+        submission.setStatus("GRADED");
         submissionMapper.updateById(submission);
 
         return resultVO;
@@ -104,23 +85,11 @@ public class IntelligentGradingServiceImpl implements IntelligentGradingService 
 
     @Override
     public IntelligentGradeResultVO gradeShortAnswer(String studentAnswer, String referenceAnswer) {
-        if(studentAnswer == null || studentAnswer.isBlank()){
-            IntelligentGradeResultVO resultVO = new IntelligentGradeResultVO();
-            resultVO.setScore(BigDecimal.ZERO);
-            resultVO.setFeedback("学生未作答。");
-            return resultVO;
-        }
-        // 1. 构建新的Prompt
-        String prompt = buildShortAnswerGradingPrompt(studentAnswer, referenceAnswer);
-        // 2. 调用LLM
-        String llmResponseJson = callLlmApi(prompt);
-        // 3. 解析结果并返回
-        return parseLlmResponse(llmResponseJson);
+        // 【优化】将逻辑完全委托给LlmService
+        return llmService.gradeShortAnswer(studentAnswer, referenceAnswer);
     }
 
-
     private String buildGradingPrompt(String reportText, String gradingRules) {
-        // 提供一个默认的评分规则，如果请求中没有提供
         if (gradingRules == null || gradingRules.isBlank()) {
             gradingRules = """
             - 内容完整性 (40%)
@@ -151,61 +120,5 @@ public class IntelligentGradingServiceImpl implements IntelligentGradingService 
               ]
             }
             """, gradingRules, reportText);
-    }
-
-    private String buildShortAnswerGradingPrompt(String studentAnswer, String referenceAnswer) {
-        return String.format("""
-            你是一位严谨的AI助教，请根据参考答案，对学生的回答进行评分。
-
-            # 参考答案:
-            ---
-            %s
-            ---
-
-            # 学生的回答:
-            ---
-            %s
-            ---
-
-            # 评分要求:
-            请判断学生的回答是否覆盖了参考答案中的要点，并评估其准确性。
-            严格按照以下JSON格式返回你的批改结果，score字段为0到100之间的数字，代表回答的得分率。
-            {
-              "score": "你的评分 (0-100)",
-              "feedback": "对学生回答的简短评语"
-            }
-            """, referenceAnswer, studentAnswer);
-    }
-
-    private String callLlmApi(String prompt) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("model", difyModel);
-        body.put("prompt", prompt);
-        body.put("stream", false);
-        body.put("format", "json");
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-        try {
-            log.info("向Dify发送请求: {}", difyApiUrl);
-            ResponseEntity<String> response = restTemplate.postForEntity(difyApiUrl, entity, String.class);
-            Map<String, Object> DifyResponse = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-            return (String) DifyResponse.get("response");
-        } catch (Exception e) {
-            log.error("调用LLM服务失败", e);
-            throw new RuntimeException("调用LLM服务失败: " + e.getMessage(), e);
-        }
-    }
-
-    private IntelligentGradeResultVO parseLlmResponse(String llmResponseJson) {
-        try {
-            return objectMapper.readValue(llmResponseJson, IntelligentGradeResultVO.class);
-        } catch (Exception e) {
-            log.error("解析LLM响应失败: {}", llmResponseJson, e);
-            throw new RuntimeException("解析LLM的JSON响应失败，原始响应: " + llmResponseJson, e);
-        }
     }
 }

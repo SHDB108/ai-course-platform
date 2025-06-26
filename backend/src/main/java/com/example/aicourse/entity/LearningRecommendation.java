@@ -18,7 +18,7 @@ public class LearningRecommendation {
     private String recommendationType; // e.g., 'KNOWLEDGE_POINT', 'REVIEW_MATERIAL'
     private Long targetId;
     private String reason;
-    private Integer isDismissed; // 0=false, 1=true
+    private Integer isDismissed; // 0=活跃, 1=用户已忽略, 2=系统判定为过时
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime gmtCreate;

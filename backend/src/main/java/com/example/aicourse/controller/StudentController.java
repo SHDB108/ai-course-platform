@@ -153,10 +153,4 @@ public class StudentController{
             return ResponseEntity.status(500).body(null);
         }
     }
-
- @GetMapping public Page<Student> page(@RequestParam(defaultValue="1") long page,@RequestParam(defaultValue="10") long size){
-  return service.page(new Page<>(page,size));
- }
-
- @PostMapping public boolean save(@RequestBody Student s){return service.save(s);}
 }
