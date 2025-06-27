@@ -15,6 +15,8 @@ import com.example.aicourse.vo.student.ImportResultVO;
 import com.example.aicourse.vo.student.StudentVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -83,6 +85,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
      * API 3.2 获取学生详情
      */
     @Override
+    @Cacheable(value = "studentCache", key = "#id")
     public StudentVO getStudentDetails(Long id) {
         Student student = studentMapper.selectById(id);
         if (student == null) {
@@ -122,6 +125,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
      */
     @Override
     @Transactional
+    @CacheEvict(value = "studentCache", key = "#id")
     public boolean updateStudent(Long id, StudentUpdateDTO dto) {
         Student student = studentMapper.selectById(id);
         if (student == null) {
@@ -150,6 +154,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
      * API 3.5 删除学生
      */
     @Override
+    @CacheEvict(value = "studentCache", key = "#id")
     public boolean deleteStudent(Long id) {
         int rows = studentMapper.deleteById(id);
         if (rows == 0) {

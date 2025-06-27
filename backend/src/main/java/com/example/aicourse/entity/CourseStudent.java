@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("course_student") // 对应数据库表名
+@TableName("t_course_student") // 对应数据库表名
 public class CourseStudent {
 
     @TableId(type = IdType.AUTO)

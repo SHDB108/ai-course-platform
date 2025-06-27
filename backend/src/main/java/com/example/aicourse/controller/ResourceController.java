@@ -5,6 +5,7 @@ import com.example.aicourse.dto.resource.ResourceUpdateDTO;
 import com.example.aicourse.entity.ResourceEntity;
 import com.example.aicourse.service.ResourceService;
 import com.example.aicourse.service.StorageService;
+import com.example.aicourse.utils.CurrentUserUtil;
 import com.example.aicourse.utils.Result;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.resource.ResourceEntityVO;
@@ -45,8 +46,7 @@ public class ResourceController {
             @RequestParam(required = false) Long courseId,
             @RequestParam(required = false) String description) throws IOException {
 
-        // TODO: 应该从Spring Security等安全上下文中获取真实用户ID
-        Long uploaderId = currentUserId();
+        Long uploaderId = CurrentUserUtil.getCurrentUser().getId();
 
         Long resourceId = resourceService.uploadResource(file, courseId, description, uploaderId);
         return Result.ok(resourceId);

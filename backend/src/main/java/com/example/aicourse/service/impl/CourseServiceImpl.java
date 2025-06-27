@@ -24,6 +24,8 @@ import com.example.aicourse.vo.course.CourseVO;
 import com.example.aicourse.vo.student.StudentVO; // 导入 StudentVO
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,6 +120,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    @Cacheable(value = "courseCache", key = "#id")
     public CourseVO getCourseDetail(Long id) {
         Course course = courseMapper.selectById(id);
         if (course == null) {
@@ -160,6 +163,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "courseCache", key = "#id")
     public boolean updateCourse(Long id, CourseUpdateDTO dto) {
         Course course = courseMapper.selectById(id);
         if (course == null) {
@@ -188,6 +192,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "courseCache", key = "#id")
     public boolean deleteCourse(Long id) {
         Course course = courseMapper.selectById(id);
         if (course == null) {
@@ -203,6 +208,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "courseCache", key = "#id")
     public boolean scheduleCourse(Long id, CourseScheduleDTO dto) {
         Course course = courseMapper.selectById(id);
         if (course == null) {

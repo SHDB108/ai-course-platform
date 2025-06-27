@@ -1,5 +1,6 @@
 package com.example.aicourse.controller;
 
+import com.example.aicourse.utils.CurrentUserUtil;
 import com.example.aicourse.utils.Result;
 import com.example.aicourse.dto.knowledge.RecommendationGenerationRequestDTO;
 import com.example.aicourse.dto.knowledge.RecommendationStatusUpdateDTO;
@@ -7,6 +8,7 @@ import com.example.aicourse.service.RecommendationService;
 import com.example.aicourse.vo.knowledge.LearningRecommendationVO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,8 +38,7 @@ public class RecommendationController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false, defaultValue = "5") Integer count) {
 
-        // TODO: 替换为从Spring Security上下文中获取真实用户ID的逻辑
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = CurrentUserUtil.getCurrentUser().getId();
         List<LearningRecommendationVO> recommendations = recommendationService.getRecommendations(currentUserId, courseId, type, count);
         return Result.ok(recommendations);
     }
@@ -62,7 +63,7 @@ public class RecommendationController {
      * @return 操作结果
      */
     @PutMapping("/{id}/status")
-    // @PreAuthorize("hasAuthority('STUDENT')") // 启用Spring Security后取消注释
+    @PreAuthorize("hasAuthority('STUDENT')")
     public Result<Void> updateRecommendationStatus(
             @PathVariable Long id,
             @Valid @RequestBody RecommendationStatusUpdateDTO dto) {
@@ -70,20 +71,5 @@ public class RecommendationController {
         // TODO: 这里应该增加一步校验，确保当前用户是这条推荐的所有者
         recommendationService.updateRecommendationStatus(id, dto);
         return Result.ok();
-    }
-
-
-    /**
-     * [占位符] 获取当前用户ID的实现
-     * TODO: 应替换为从Spring Security等安全上下文中获取真实用户ID的逻辑
-     * @return 写死的ID 1L
-     */
-    private Long getCurrentUserId() {
-        // Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        // if (authentication == null || !authentication.isAuthenticated()) {
-        //     throw new IllegalStateException("用户未登录或认证失败");
-        // }
-        // return Long.parseLong(authentication.getName());
-        return 1L; // 占位符
     }
 }

@@ -24,6 +24,7 @@ public class LocalStorageServiceImpl implements StorageService {
     public LocalStorageServiceImpl(StorageProperties prop) {
         this.prop = prop;
     }
+
     @Override
     public String upload(MultipartFile file) throws IOException {
         Files.createDirectories(prop.getLocalPath());

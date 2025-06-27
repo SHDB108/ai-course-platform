@@ -2,6 +2,7 @@ package com.example.aicourse.controller;
 
 import com.example.aicourse.dto.resource.ProgressDTO;
 import com.example.aicourse.service.VideoProgressService;
+import com.example.aicourse.utils.CurrentUserUtil;
 import com.example.aicourse.utils.Result;
 import com.example.aicourse.vo.resource.VideoProgressVO;
 import com.example.aicourse.vo.resource.VideoStudyStatisticsVO;
@@ -28,8 +29,7 @@ public class VideoProgressController {
      */
     @PostMapping("/{resourceId}/progress")
     public Result<Void> report(@PathVariable Long resourceId, @RequestBody ProgressDTO dto) {
-        // TODO: studentId 应从安全上下文中获取
-        Long studentId = currentUserId();
+        Long studentId = CurrentUserUtil.getCurrentUser().getId();
         service.record(resourceId, studentId, dto);
         return Result.ok();
     }

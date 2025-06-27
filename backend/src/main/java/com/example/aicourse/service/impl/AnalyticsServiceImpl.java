@@ -72,7 +72,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 case "WEEK" -> LocalDateTime.now().minusWeeks(1);
                 case "MONTH" -> LocalDateTime.now().minusMonths(1);
                 case "YEAR" -> LocalDateTime.now().minusYears(1);
-                default -> startDate;
+                default -> null;
             };
         }
         return tsMapper.selectByCourse(courseId, startDate);

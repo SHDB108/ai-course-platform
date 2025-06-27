@@ -36,11 +36,12 @@ public class AuthController {
      */
     @PostMapping("/login")
     public Result<LoginResponseVO> login(@Valid @RequestBody LoginRequestDTO request) {
-        LoginResponseVO response = authService.login(request.getUsername(), request.getPassword());
-        if (response != null) {
+        try {
+            LoginResponseVO response = authService.login(request);
             return Result.ok(response);
-        } else {
-            return Result.error("用户名或密码错误");
+        } catch (Exception e) {
+            // 返回更具体的认证失败信息
+            return Result.error("认证失败: 用户名或密码错误");
         }
     }
 

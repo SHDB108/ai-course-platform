@@ -8,16 +8,9 @@ import com.example.aicourse.dto.auth.StudentRegisterDTO;
 import com.example.aicourse.dto.auth.TeacherRegisterDTO;
 import com.example.aicourse.vo.auth.LoginResponseVO;
 import com.example.aicourse.vo.user.UserDetailVO;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
-public interface AuthService {
-    /**
-     * 用户登录
-     * @param username 用户名
-     * @param password 密码
-     * @return 登录响应对象，包含Token和用户信息；如果认证失败返回null
-     */
-    LoginResponseVO login(String username, String password);
-
+public interface AuthService extends UserDetailsService {
     /**
      * 学生用户注册
      * @param dto 学生注册请求DTO
@@ -65,4 +58,7 @@ public interface AuthService {
      * @return 密码重置成功返回true
      */
     boolean resetPassword(PasswordResetDTO dto);
+
+    LoginResponseVO login(LoginRequestDTO dto);
+
 }

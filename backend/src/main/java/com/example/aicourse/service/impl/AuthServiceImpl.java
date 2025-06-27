@@ -15,10 +15,21 @@ import com.example.aicourse.repository.StudentMapper;
 import com.example.aicourse.repository.TeacherMapper;
 import com.example.aicourse.repository.UserMapper;
 import com.example.aicourse.service.AuthService;
+import com.example.aicourse.utils.JwtUtil;
 import com.example.aicourse.vo.auth.LoginResponseVO;
 import com.example.aicourse.vo.user.UserDetailVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,47 +39,66 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final StudentMapper studentMapper;
     private final TeacherMapper teacherMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public AuthServiceImpl(UserMapper userMapper, StudentMapper studentMapper, TeacherMapper teacherMapper) {
+    public AuthServiceImpl(UserMapper userMapper, StudentMapper studentMapper, TeacherMapper teacherMapper, @Lazy PasswordEncoder passwordEncoder,@Lazy AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.userMapper = userMapper;
         this.studentMapper = studentMapper;
         this.teacherMapper = teacherMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * 获取当前登录用户的实体
+     * @return User 实体
+     */
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new RuntimeException("用户未登录或会话已过期");
+        }
+        return (User) authentication.getPrincipal();
+    }
+
+
+    /**
+     * 实现 UserDetailsService 接口的核心方法
+     * Spring Security 会调用此方法来获取用户信息
+     */
     @Override
-    public LoginResponseVO login(String username, String password) {
-        // 1. 根据用户名查找用户
-        LambdaQueryWrapper<User> queryWrapper = Wrappers.<User>lambdaQuery()
-                .eq(User::getUsername, username);
-        User user = userMapper.selectOne(queryWrapper);
-
-        // 2. 检查用户是否存在以及密码是否正确
-        // 注意：实际项目中密码应该加密存储，这里为简化示例直接比较明文密码
-        if (user == null || !user.getPassword().equals(password)) {
-            return null; // 用户名或密码错误
+    @Cacheable(value = "userCache", key = "#username")
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with username: " + username);
         }
+        return user;
+    }
 
-        // 3. 检查用户状态 (例如，0=禁用)
-        if (user.getStatus() != null && user.getStatus() == 0) {
-            return null; // 用户已被禁用
-        }
 
-        // 4. 模拟生成Token (实际项目中使用JWT等)
-        String token = "mock_jwt_token_for_" + username + "_" + System.currentTimeMillis();
+    @Override
+    public LoginResponseVO login(LoginRequestDTO dto) {
+        // 1. 使用 AuthenticationManager 进行认证
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
+        );
 
-        // 5. 构建并返回LoginResponseVO
-        LoginResponseVO response = new LoginResponseVO();
-        response.setToken(token);
-        response.setUserId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setRole(user.getRole()); // 返回用户角色
+        // 2. 如果认证通过，SecurityContextHolder会持有认证信息
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // TODO: 更新用户最后登录时间 (可选)
-        // user.setLastLoginTime(LocalDateTime.now());
-        // userMapper.updateById(user);
+        // 3. 从认证信息中获取 UserDetails
+        User userDetails = (User) authentication.getPrincipal();
 
-        return response;
+        // 4. 生成 JWT
+        final String token = jwtUtil.generateToken(userDetails);
+
+        // 5. 构建响应
+        return new LoginResponseVO(token, userDetails.getId(), userDetails.getUsername(), userDetails.getRole());
     }
 
     @Override
@@ -90,7 +120,8 @@ public class AuthServiceImpl implements AuthService {
         // 4. 创建User实体
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword()); // 实际项目中应加密密码
+        // 使用 passwordEncoder 加密密码
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setEmail(dto.getEmail());
         user.setPhone(dto.getPhone());
         user.setRole("STUDENT"); // 设置角色为学生
@@ -111,7 +142,7 @@ public class AuthServiceImpl implements AuthService {
         BeanUtils.copyProperties(dto, student);
         studentMapper.insert(student);
 
-        return newUserId;
+        return user.getId();
     }
 
     @Override
@@ -133,7 +164,8 @@ public class AuthServiceImpl implements AuthService {
         // 4. 创建User实体
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword()); // 实际项目中应加密密码
+        // 使用 passwordEncoder 加密密码
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setEmail(dto.getEmail());
         user.setPhone(dto.getPhone());
         user.setRole("TEACHER"); // 设置角色为教师
@@ -154,7 +186,7 @@ public class AuthServiceImpl implements AuthService {
         BeanUtils.copyProperties(dto, teacher);
         teacherMapper.insert(teacher);
 
-        return newUserId;
+        return user.getId();
     }
 
     @Override
@@ -168,76 +200,48 @@ public class AuthServiceImpl implements AuthService {
         return true;
     }
 
-    /**
-     * [新增] 获取当前用户ID的占位实现
-     * TODO: 应替换为从Spring Security等安全上下文中获取真实用户ID的逻辑
-     * @return 写死的ID 1L
-     */
-    private Long currentUserId() {
-        // 临时占位符，模拟当前登录用户ID
-        // 在实际应用中，此ID应从 Spring Security 上下文、JWT 解析或Session中获取
-        return 1L; // 假设当前用户ID为1
-    }
-
     @Override
     public UserDetailVO getCurrentUserInfo() {
-        Long userId = currentUserId(); // 获取当前用户ID (占位符)
-        if (userId == null) {
-            throw new RuntimeException("用户未登录或会话已过期");
-        }
-
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw new RuntimeException("用户不存在");
-        }
+        User user = getCurrentUser();
 
         UserDetailVO userDetailVO = new UserDetailVO();
         // 复制User基础信息
         BeanUtils.copyProperties(user, userDetailVO);
 
-        // 根据角色填充特定信息 (UserDetailVO 使用 JsonInclude.Include.NON_NULL 动态隐藏 null 字段)
+        // 根据角色填充特定信息
         if ("STUDENT".equals(user.getRole())) {
-            Student student = studentMapper.selectById(userId);
+            Student student = studentMapper.selectById(user.getId());
             if (student != null) {
                 BeanUtils.copyProperties(student, userDetailVO);
             }
         } else if ("TEACHER".equals(user.getRole())) {
-            Teacher teacher = teacherMapper.selectById(userId);
+            Teacher teacher = teacherMapper.selectById(user.getId());
             if (teacher != null) {
                 BeanUtils.copyProperties(teacher, userDetailVO);
             }
         }
-        // 对于ADMIN角色，UserDetailVO中已包含User的基础信息，无需额外查询
-
         return userDetailVO;
     }
 
+
     @Override
     @Transactional
+    @CacheEvict(value = "userCache", key = "#result.username")
     public boolean updatePassword(Long userId, PasswordUpdateDTO dto) {
-        // 1. 验证用户ID是否匹配当前登录用户 (在实际应用中，userId应与当前认证用户的ID匹配)
-        // 这里简化为直接使用传入的userId，但实际应该校验 currentUserId() == userId
-        // 如果要更严格，可以这样做：
-        // Long authenticatedUserId = currentUserId();
-        // if (!userId.equals(authenticatedUserId)) {
-        //     throw new RuntimeException("无权修改其他用户密码");
-        // }
-
-        // 2. 查找用户
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw new RuntimeException("用户不存在");
+        // 1. 验证用户ID是否匹配当前登录用户
+        User currentUser = getCurrentUser();
+        if (!userId.equals(currentUser.getId())) {
+            throw new RuntimeException("无权修改其他用户的密码");
         }
 
-        // 3. 验证旧密码
-        // 实际项目中，旧密码也需要加密后比对
-        if (!user.getPassword().equals(dto.getOldPassword())) {
+        // 2. 验证旧密码 (使用 passwordEncoder.matches)
+        if (!passwordEncoder.matches(dto.getOldPassword(), currentUser.getPassword())) {
             throw new RuntimeException("旧密码不正确");
         }
 
-        // 4. 更新新密码
-        user.setPassword(dto.getNewPassword()); // 实际项目中，新密码也需要加密
-        int rowsAffected = userMapper.updateById(user);
+        // 3. 更新为加密后的新密码
+        currentUser.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        int rowsAffected = userMapper.updateById(currentUser);
 
         if (rowsAffected != 1) {
             throw new RuntimeException("密码更新失败");
@@ -274,6 +278,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "userCache", key = "#dto.identifier")
     public boolean resetPassword(PasswordResetDTO dto) {
         // 1. 根据 identifier 查找用户
         LambdaQueryWrapper<User> queryWrapper = Wrappers.<User>lambdaQuery()
@@ -301,8 +306,7 @@ public class AuthServiceImpl implements AuthService {
         System.out.println("模拟：验证码 '" + dto.getVerificationCode() + "' 验证通过");
 
 
-        // 3. 更新新密码
-        user.setPassword(dto.getNewPassword()); // 实际项目中，新密码也需要加密
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         int rowsAffected = userMapper.updateById(user);
 
         if (rowsAffected != 1) {

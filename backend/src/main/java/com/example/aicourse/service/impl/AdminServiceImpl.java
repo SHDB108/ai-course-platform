@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthComponent;
 import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,21 +35,23 @@ import java.util.stream.Collectors;
 @Service
 public class AdminServiceImpl implements AdminService {
 
-    private UserMapper userMapper;
-    private StudentMapper studentMapper;
-    private TeacherMapper teacherMapper;
+    private final UserMapper userMapper;
+    private final StudentMapper studentMapper;
+    private final TeacherMapper teacherMapper;
     private final StorageProperties storageProperties;
     private final HealthEndpoint healthEndpoint;
+    private final PasswordEncoder passwordEncoder;
 
     private static final List<String> VALID_ROLES = Arrays.asList("STUDENT", "TEACHER", "ADMIN");
 
     @Autowired
-    public AdminServiceImpl(UserMapper userMapper,  StudentMapper studentMapper, TeacherMapper teacherMapper, StorageProperties storageProperties, HealthEndpoint healthEndpoint) {
+    public AdminServiceImpl(UserMapper userMapper,  StudentMapper studentMapper, TeacherMapper teacherMapper, StorageProperties storageProperties, HealthEndpoint healthEndpoint, PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
         this.studentMapper = studentMapper;
         this.teacherMapper = teacherMapper;
         this.storageProperties = storageProperties;
         this.healthEndpoint = healthEndpoint;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -236,7 +239,8 @@ public class AdminServiceImpl implements AdminService {
         // 3. 创建User实体
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword()); // 实际项目中应加密密码
+        // 使用 passwordEncoder 加密密码
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setEmail(dto.getEmail());
         // 手机号在UserCreateByAdminDTO中没有，根据User实体定义，User可以有phone，但此DTO没提供
         // user.setPhone(dto.getPhone()); // DTO中没有phone字段
@@ -285,6 +289,6 @@ public class AdminServiceImpl implements AdminService {
         }
         // 对于 ADMIN 角色，User 实体已足够
 
-        return newUserId;
+        return user.getId();
     }
 }
