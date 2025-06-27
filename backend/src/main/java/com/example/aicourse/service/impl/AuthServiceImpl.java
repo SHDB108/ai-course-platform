@@ -25,14 +25,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
+    private final StudentMapper studentMapper;
+    private final TeacherMapper teacherMapper;
 
     @Autowired
-    private StudentMapper studentMapper;
-
-    @Autowired
-    private TeacherMapper teacherMapper;
+    public AuthServiceImpl(UserMapper userMapper, StudentMapper studentMapper, TeacherMapper teacherMapper) {
+        this.userMapper = userMapper;
+        this.studentMapper = studentMapper;
+        this.teacherMapper = teacherMapper;
+    }
 
     @Override
     public LoginResponseVO login(String username, String password) {

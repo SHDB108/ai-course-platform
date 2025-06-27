@@ -24,8 +24,12 @@ import java.util.List;
 @RequestMapping("/api/v1/task-submissions")
 public class TaskSubmissionController {
 
+    private final TaskSubmissionService taskSubmissionService;
+
     @Autowired
-    private TaskSubmissionService taskSubmissionService;
+    public TaskSubmissionController(TaskSubmissionService taskSubmissionService) {
+        this.taskSubmissionService = taskSubmissionService;
+    }
 
     /**
      * API 6.1 学生提交任务 (在线/链接提交)

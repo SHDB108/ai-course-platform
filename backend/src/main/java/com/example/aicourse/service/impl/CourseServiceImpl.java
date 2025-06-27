@@ -34,16 +34,20 @@ import java.util.stream.Collectors;
 @Service
 public class CourseServiceImpl implements CourseService {
 
+    private final CourseMapper courseMapper;
+    private final TeacherMapper teacherMapper;
+    private final CourseStudentMapper courseStudentMapper;
+    private final StudentMapper studentMapper;
+    private final UserMapper userMapper;
+
     @Autowired
-    private CourseMapper courseMapper;
-    @Autowired
-    private TeacherMapper teacherMapper;
-    @Autowired
-    private CourseStudentMapper courseStudentMapper; // 注入 CourseStudentMapper
-    @Autowired
-    private StudentMapper studentMapper;             // 注入 StudentMapper
-    @Autowired
-    private UserMapper userMapper;                   // 注入 UserMapper
+    public CourseServiceImpl(CourseMapper courseMapper, TeacherMapper teacherMapper, CourseStudentMapper courseStudentMapper, StudentMapper studentMapper, UserMapper userMapper) {
+        this.courseMapper = courseMapper;
+        this.teacherMapper = teacherMapper;
+        this.courseStudentMapper = courseStudentMapper;
+        this.studentMapper = studentMapper;
+        this.userMapper = userMapper;
+    }
 
     @Override
     public PageVO<CourseVO> listCourses(Long pageNum, Long pageSize, Long teacherId, String keyword, String semester, Integer credits, String department) {

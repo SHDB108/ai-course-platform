@@ -33,8 +33,12 @@ import java.util.stream.Collectors;
 @Service
 public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> implements StudentService{
 
+    private final StudentMapper studentMapper;
+
     @Autowired
-    private StudentMapper studentMapper; // 显式注入 mapper
+    public StudentServiceImpl(StudentMapper studentMapper) {
+        this.studentMapper = studentMapper;
+    }
 
     /**
      * API 3.1 获取学生列表 (分页)

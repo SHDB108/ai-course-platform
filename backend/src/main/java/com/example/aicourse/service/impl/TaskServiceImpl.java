@@ -20,10 +20,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service public class TaskServiceImpl extends ServiceImpl<TaskMapper,Task> implements TaskService{
+@Service
+public class TaskServiceImpl extends ServiceImpl<TaskMapper,Task> implements TaskService{
+
+    private final TaskMapper taskMapper;
 
     @Autowired
-    private TaskMapper taskMapper; // 显式注入 mapper
+    public TaskServiceImpl(TaskMapper taskMapper) {
+        this.taskMapper = taskMapper;
+    }
 
     /**
      * API 5.1 获取课程任务列表
