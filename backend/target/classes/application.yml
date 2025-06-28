@@ -1,0 +1,23 @@
+server:
+  port:8080
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/aicourse
+    username: root
+    password: 12345678
+  data:
+    redis:
+      host: localhost
+      port: 6379
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+storage:
+  type: local
+  local-path: upload
+
+llm:
+  dify:
+    api-url: "http://localhost/v1"
+    api-key: "app-SKDG1Ww8x4Rw4js6WsSuRKYI"
+    model: "deepseek-r1:1.5b"

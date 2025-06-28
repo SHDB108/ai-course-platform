@@ -2,14 +2,17 @@ package com.example.aicourse.service.impl;
 
 import com.example.aicourse.repository.KnowledgePointMapper;
 import com.example.aicourse.repository.KnowledgePointRelationMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -23,27 +26,30 @@ class KnowledgeGraphServiceImplTest {
     @Mock
     private KnowledgePointRelationMapper relationMapper;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @InjectMocks
     private KnowledgeGraphServiceImpl knowledgeGraphService;
 
     @Test
-    void saveGraphFromJson_shouldParseAndSaveNodesAndEdgesCorrectly() throws Exception {
-        // 1. 准备
-        ReflectionTestUtils.setField(knowledgeGraphService, "objectMapper", objectMapper);
+    void saveGraphFromMap_shouldParseAndSaveNodesAndEdgesCorrectly() throws Exception {
+        // 1. 准备测试数据
         Long courseId = 1L;
-        String llmJsonResponse = """
-                {
-                  "nodes": [
-                    {"name": "Spring Boot", "description": "核心框架"},
-                    {"name": "Auto-Configuration", "description": "自动配置"}
-                  ],
-                  "edges": [
-                    {"source": "Auto-Configuration", "target": "Spring Boot", "relation": "PART_OF"}
-                  ]
-                }
-                """;
+        
+        // 创建模拟的图数据
+        Map<String, List<Map<String, String>>> graphData = new HashMap<>();
+        
+        // 节点数据
+        List<Map<String, String>> nodes = Arrays.asList(
+            createNode("Spring Boot", "核心框架"),
+            createNode("Auto-Configuration", "自动配置")
+        );
+        
+        // 边数据
+        List<Map<String, String>> edges = Arrays.asList(
+            createEdge("Auto-Configuration", "Spring Boot", "PART_OF")
+        );
+        
+        graphData.put("nodes", nodes);
+        graphData.put("edges", edges);
 
         // 使用ArgumentCaptor捕获传递给mapper的参数
         ArgumentCaptor<com.example.aicourse.entity.KnowledgePoint> kpCaptor = ArgumentCaptor.forClass(com.example.aicourse.entity.KnowledgePoint.class);
@@ -54,15 +60,15 @@ class KnowledgeGraphServiceImplTest {
             com.example.aicourse.entity.KnowledgePoint kp = invocation.getArgument(0);
             // 模拟数据库生成ID
             if ("Spring Boot".equals(kp.getName())) {
-                ReflectionTestUtils.setField(kp, "id", 101L);
+                kp.setId(101L);
             } else {
-                ReflectionTestUtils.setField(kp, "id", 102L);
+                kp.setId(102L);
             }
             return 1;
         });
 
         // 2. 执行
-        knowledgeGraphService.saveGraphFromJson(courseId, llmJsonResponse);
+        knowledgeGraphService.saveGraphFromMap(courseId, graphData);
 
         // 3. 断言
         // 验证KnowledgePointMapper.insert被调用了两次
@@ -80,5 +86,64 @@ class KnowledgeGraphServiceImplTest {
         assertEquals(102L, capturedRelation.getSourceId()); // "Auto-Configuration"的ID
         assertEquals(101L, capturedRelation.getTargetId());  // "Spring Boot"的ID
         assertEquals("PART_OF", capturedRelation.getRelationType());
+    }
+
+    @Test
+    void saveGraphFromMap_withEmptyData_shouldHandleGracefully() {
+        // 1. 准备空数据
+        Long courseId = 1L;
+        Map<String, List<Map<String, String>>> emptyGraphData = new HashMap<>();
+        emptyGraphData.put("nodes", null);
+        emptyGraphData.put("edges", null);
+
+        // 2. 执行
+        knowledgeGraphService.saveGraphFromMap(courseId, emptyGraphData);
+
+        // 3. 断言 - 应该正常处理，不抛出异常
+        verify(knowledgePointMapper, times(1)).delete(any());
+        verify(knowledgePointMapper, never()).insert(any());
+        verify(relationMapper, never()).insert(any());
+    }
+
+    @Test
+    void saveGraphFromMap_withOnlyNodes_shouldSaveNodesOnly() {
+        // 1. 准备只有节点的数据
+        Long courseId = 1L;
+        Map<String, List<Map<String, String>>> graphData = new HashMap<>();
+        
+        List<Map<String, String>> nodes = Arrays.asList(
+            createNode("Spring Boot", "核心框架"),
+            createNode("Auto-Configuration", "自动配置")
+        );
+        
+        graphData.put("nodes", nodes);
+        graphData.put("edges", null);
+
+        // 模拟mapper.insert
+        when(knowledgePointMapper.insert(any())).thenReturn(1);
+
+        // 2. 执行
+        knowledgeGraphService.saveGraphFromMap(courseId, graphData);
+
+        // 3. 断言
+        verify(knowledgePointMapper, times(2)).insert(any());
+        verify(relationMapper, never()).insert(any());
+    }
+
+    // 辅助方法：创建节点数据
+    private Map<String, String> createNode(String name, String description) {
+        Map<String, String> node = new HashMap<>();
+        node.put("name", name);
+        node.put("description", description);
+        return node;
+    }
+
+    // 辅助方法：创建边数据
+    private Map<String, String> createEdge(String source, String target, String relation) {
+        Map<String, String> edge = new HashMap<>();
+        edge.put("source", source);
+        edge.put("target", target);
+        edge.put("relation", relation);
+        return edge;
     }
 }

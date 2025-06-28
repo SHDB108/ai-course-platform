@@ -1,0 +1,11 @@
+com\example\aicourse\service\AuthServiceTest.class
+com\example\aicourse\utils\ResultTest.class
+com\example\aicourse\service\StudentServiceTest.class
+com\example\aicourse\utils\ResultTest$TestData.class
+com\example\aicourse\AICourseApplicationTest.class
+com\example\aicourse\service\CourseServiceTest.class
+com\example\aicourse\service\impl\IntelligentGradingServiceImplTest.class
+com\example\aicourse\service\impl\KnowledgeGraphServiceImplTest.class
+com\example\aicourse\service\impl\IntelligentGradingServiceIntegrationTest.class
+com\example\aicourse\service\impl\IntelligentGradingServiceIntegrationTest$TestConfig.class
+com\example\aicourse\service\TaskServiceTest.class

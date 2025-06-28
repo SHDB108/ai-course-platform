@@ -1,0 +1,24 @@
+-------------------------------------------------------------------------------
+Test set: com.example.aicourse.service.impl.IntelligentGradingServiceImplTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 0.606 s <<< FAILURE! -- in com.example.aicourse.service.impl.IntelligentGradingServiceImplTest
+com.example.aicourse.service.impl.IntelligentGradingServiceImplTest.gradeShortAnswer_shouldReturnCorrectScoreAndFeedback_whenLlmApiSucceeds -- Time elapsed: 0.581 s <<< ERROR!
+java.lang.IllegalArgumentException: Could not find field 'difyApiUrl' of type [null] on target object [com.example.aicourse.service.impl.IntelligentGradingServiceImpl@7ed08d52] or target class [class com.example.aicourse.service.impl.IntelligentGradingServiceImpl]
+	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:190)
+	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:107)
+	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:91)
+	at com.example.aicourse.service.impl.IntelligentGradingServiceImplTest.setUp(IntelligentGradingServiceImplTest.java:39)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.example.aicourse.service.impl.IntelligentGradingServiceImplTest.gradeShortAnswer_shouldReturnZeroScore_whenStudentAnswerIsBlank -- Time elapsed: 0.009 s <<< ERROR!
+java.lang.IllegalArgumentException: Could not find field 'difyApiUrl' of type [null] on target object [com.example.aicourse.service.impl.IntelligentGradingServiceImpl@7357a52e] or target class [class com.example.aicourse.service.impl.IntelligentGradingServiceImpl]
+	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:190)
+	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:107)
+	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:91)
+	at com.example.aicourse.service.impl.IntelligentGradingServiceImplTest.setUp(IntelligentGradingServiceImplTest.java:39)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
