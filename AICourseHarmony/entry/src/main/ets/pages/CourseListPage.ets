@@ -1,29 +1,38 @@
 import router from '@ohos.router';
-import { getCurrentUser, users, UserInfo, UserRole } from '../common/UserStore';
+import { getCurrentUser, UserInfo } from '../common/UserStore';
+import { getEnrolledCourses, getAllCourses, getCoursesByTeacher, Course } from '../common/CourseStore';
 
 @Entry
 @Component
-struct UserManagePage {
+struct CourseListPage {
   @State currentUser: UserInfo | null = getCurrentUser();
-  @State userList: UserInfo[] = [];
+  @State courses: Course[] = [];
   @State searchText: string = '';
-  @State selectedRole: string = 'all';
+  @State selectedCategory: string = 'all';
   @State isLoading: boolean = false;
 
   aboutToAppear() {
-    if (!this.currentUser || this.currentUser.role !== 'admin') {
+    if (!this.currentUser) {
       router.replaceUrl({ url: 'pages/LoginPage' });
       return;
     }
-    this.loadUsers();
+    this.loadCourses();
   }
 
-  loadUsers() {
+  loadCourses() {
     this.isLoading = true;
     
     // 模拟网络延迟
     setTimeout(() => {
-      this.userList = users;
+      if (this.currentUser) {
+        if (this.currentUser.role === 'student') {
+          this.courses = getEnrolledCourses(this.currentUser.id);
+        } else if (this.currentUser.role === 'teacher') {
+          this.courses = getCoursesByTeacher(this.currentUser.id);
+        } else if (this.currentUser.role === 'admin') {
+          this.courses = getAllCourses();
+        }
+      }
       this.isLoading = false;
     }, 500);
   }
@@ -39,17 +48,17 @@ struct UserManagePage {
             router.back();
           })
         
-        Text('用户管理')
+        Text('课程列表')
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .flexGrow(1)
           .textAlign(TextAlign.Center)
         
-        Button('+ 添加')
+        Button('+ 新建')
           .fontSize(16)
           .backgroundColor(Color.Transparent)
           .onClick(() => {
-            router.pushUrl({ url: 'pages/EditUserPage' });
+            // TODO: 跳转到新建课程页面
           })
       }
       .width('100%')
@@ -60,8 +69,8 @@ struct UserManagePage {
       // 搜索和筛选
       this.buildSearchAndFilter()
       
-      // 用户列表
-      this.buildUserList()
+      // 课程列表
+      this.buildCourseList()
     }
     .width('100%')
     .height('100%')
@@ -74,12 +83,12 @@ struct UserManagePage {
       // 搜索框
       Row() {
         TextInput({ 
-          placeholder: '搜索用户名或真实姓名', 
+          placeholder: '搜索课程名称或教师', 
           text: this.searchText 
         })
           .onChange((value: string) => {
             this.searchText = value;
-            this.filterUsers();
+            this.filterCourses();
           })
           .flexGrow(1)
           .height(40)
@@ -96,18 +105,20 @@ struct UserManagePage {
           .fontColor(Color.White)
           .margin({ left: 10 })
           .onClick(() => {
-            this.filterUsers();
+            this.filterCourses();
           })
       }
       .margin({ bottom: 15 })
 
-      // 角色筛选
+      // 分类筛选
       Scroll() {
         Row() {
           this.buildFilterChip('全部', 'all')
-          this.buildFilterChip('学生', 'student')
-          this.buildFilterChip('教师', 'teacher')
-          this.buildFilterChip('管理员', 'admin')
+          this.buildFilterChip('人工智能', 'ai')
+          this.buildFilterChip('机器学习', 'ml')
+          this.buildFilterChip('深度学习', 'dl')
+          this.buildFilterChip('计算机视觉', 'cv')
+          this.buildFilterChip('自然语言处理', 'nlp')
         }
         .padding({ left: 20, right: 20 })
       }
@@ -123,18 +134,18 @@ struct UserManagePage {
     Button(label)
       .fontSize(14)
       .height(32)
-      .backgroundColor(this.selectedRole === value ? '#007AFF' : '#f0f0f0')
-      .fontColor(this.selectedRole === value ? Color.White : '#333')
+      .backgroundColor(this.selectedCategory === value ? '#007AFF' : '#f0f0f0')
+      .fontColor(this.selectedCategory === value ? Color.White : '#333')
       .borderRadius(16)
       .margin({ right: 10 })
       .onClick(() => {
-        this.selectedRole = value;
-        this.filterUsers();
+        this.selectedCategory = value;
+        this.filterCourses();
       })
   }
 
   @Builder
-  buildUserList() {
+  buildCourseList() {
     if (this.isLoading) {
       Column() {
         LoadingProgress()
@@ -149,18 +160,18 @@ struct UserManagePage {
       }
       .width('100%')
       .alignItems(HorizontalAlign.Center)
-    } else if (this.userList.length === 0) {
+    } else if (this.courses.length === 0) {
       Column() {
-        Text('👥')
+        Text('📚')
           .fontSize(60)
           .margin({ top: 100, bottom: 20 })
         
-        Text('暂无用户')
+        Text('暂无课程')
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
           .margin({ bottom: 10 })
         
-        Text('系统中还没有任何用户')
+        Text('您还没有任何课程')
           .fontSize(14)
           .fontColor('#666')
       }
@@ -168,9 +179,9 @@ struct UserManagePage {
       .alignItems(HorizontalAlign.Center)
     } else {
       List() {
-        ForEach(this.userList, (user: UserInfo) => {
+        ForEach(this.courses, (course: Course) => {
           ListItem() {
-            this.buildUserItem(user)
+            this.buildCourseItem(course)
           }
         })
       }
@@ -181,43 +192,53 @@ struct UserManagePage {
   }
 
   @Builder
-  buildUserItem(user: UserInfo) {
+  buildCourseItem(course: Course) {
     Row() {
-      // 用户头像
-      Image(user.avatar || $r('app.media.foreground'))
-        .width(50)
-        .height(50)
-        .borderRadius(25)
+      // 课程封面
+      Image(course.coverImage || $r('app.media.foreground'))
+        .width(80)
+        .height(60)
+        .borderRadius(8)
         .backgroundColor('#f0f0f0')
       
-      // 用户信息
+      // 课程信息
       Column() {
-        Text(user.realName)
+        Text(course.name)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .margin({ bottom: 5 })
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
         
-        Text(`@${user.username}`)
+        Text(course.description)
           .fontSize(14)
           .fontColor('#666')
           .margin({ bottom: 5 })
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
         
         Row() {
-          Text(this.getRoleText(user.role))
+          Text(course.teacherName)
             .fontSize(12)
-            .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-            .backgroundColor(this.getRoleColor(user.role))
-            .fontColor(Color.White)
-            .borderRadius(10)
+            .fontColor('#999')
           
           Text('•')
             .fontSize(12)
             .fontColor('#999')
             .margin({ left: 8, right: 8 })
           
-          Text(user.status === 'active' ? '正常' : '禁用')
+          Text(`${course.enrolledCount}人学习`)
             .fontSize(12)
-            .fontColor(user.status === 'active' ? '#28a745' : '#FF3B30')
+            .fontColor('#999')
+          
+          Text('•')
+            .fontSize(12)
+            .fontColor('#999')
+            .margin({ left: 8, right: 8 })
+          
+          Text('人工智能')
+            .fontSize(12)
+            .fontColor('#999')
         }
       }
       .alignItems(HorizontalAlign.Start)
@@ -226,26 +247,39 @@ struct UserManagePage {
       
       // 操作按钮
       Column() {
-        Button('编辑')
-          .fontSize(12)
-          .height(30)
-          .backgroundColor('#007AFF')
-          .borderRadius(15)
-          .fontColor(Color.White)
-          .onClick(() => {
-            this.editUser(user);
-          })
-          .margin({ bottom: 5 })
-        
-        Button(user.status === 'active' ? '禁用' : '启用')
-          .fontSize(12)
-          .height(30)
-          .backgroundColor(user.status === 'active' ? '#FF3B30' : '#28a745')
-          .borderRadius(15)
-          .fontColor(Color.White)
-          .onClick(() => {
-            this.toggleUserStatus(user);
-          })
+        if (this.currentUser?.role === 'student') {
+          if (course.isEnrolled) {
+            Button('继续学习')
+              .fontSize(12)
+              .height(30)
+              .backgroundColor('#007AFF')
+              .borderRadius(15)
+              .fontColor(Color.White)
+              .onClick(() => {
+                this.enterCourse(course);
+              })
+          } else {
+            Button('加入课程')
+              .fontSize(12)
+              .height(30)
+              .backgroundColor('#28a745')
+              .borderRadius(15)
+              .fontColor(Color.White)
+              .onClick(() => {
+                this.enrollCourse(course);
+              })
+          }
+        } else {
+          Button('管理')
+            .fontSize(12)
+            .height(30)
+            .backgroundColor('#007AFF')
+            .borderRadius(15)
+            .fontColor(Color.White)
+            .onClick(() => {
+              this.manageCourse(course);
+            })
+        }
       }
       .alignItems(HorizontalAlign.End)
     }
@@ -255,49 +289,27 @@ struct UserManagePage {
     .borderRadius(12)
     .margin({ bottom: 15 })
     .onClick(() => {
-      this.viewUserDetail(user);
+      this.viewCourseDetail(course);
     })
   }
 
-  filterUsers() {
-    // TODO: 实现用户筛选逻辑
+  filterCourses() {
+    // TODO: 实现课程筛选逻辑
   }
 
-  viewUserDetail(user: UserInfo) {
-    // TODO: 跳转到用户详情页面
+  viewCourseDetail(course: Course) {
+    // TODO: 跳转到课程详情页面
   }
 
-  editUser(user: UserInfo) {
-    // TODO: 跳转到编辑用户页面
+  enterCourse(course: Course) {
+    // TODO: 进入课程学习页面
   }
 
-  toggleUserStatus(user: UserInfo) {
-    // TODO: 实现用户状态切换
+  enrollCourse(course: Course) {
+    // TODO: 实现选课功能
   }
 
-  getRoleText(role: UserRole): string {
-    switch (role) {
-      case 'admin':
-        return '管理员';
-      case 'teacher':
-        return '教师';
-      case 'student':
-        return '学生';
-      default:
-        return '未知';
-    }
-  }
-
-  getRoleColor(role: UserRole): string {
-    switch (role) {
-      case 'admin':
-        return '#FF3B30';
-      case 'teacher':
-        return '#007AFF';
-      case 'student':
-        return '#28a745';
-      default:
-        return '#999';
-    }
+  manageCourse(course: Course) {
+    // TODO: 跳转到课程管理页面
   }
 } 

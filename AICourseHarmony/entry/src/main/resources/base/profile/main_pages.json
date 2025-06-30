@@ -1,5 +1,13 @@
 {
   "src": [
-    "pages/Index"
+    "pages/Index",
+    "pages/LoginPage",
+    "pages/MainPage",
+    "pages/UserInfoPage",
+    "pages/EditUserPage",
+    "pages/UserManagePage",
+    "pages/SystemSettingPage",
+    "pages/CourseListPage",
+    "pages/QuizListPage"
   ]
 }
