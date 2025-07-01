@@ -8,6 +8,7 @@
     "pages/UserManagePage",
     "pages/SystemSettingPage",
     "pages/CourseListPage",
-    "pages/QuizListPage"
+    "pages/QuizListPage",
+    "pages/LearningProgressPage"
   ]
 }

@@ -1,6 +1,6 @@
 import router from '@ohos.router';
 import { getCurrentUser, UserInfo } from '../common/UserStore';
-import { getEnrolledCourses, getAllCourses, getCoursesByTeacher, Course } from '../common/CourseStore';
+import { getEnrolledCourses, getAllCourses, getCoursesByTeacher, Course, enrollCourse } from '../common/CourseStore';
 
 @Entry
 @Component
@@ -69,8 +69,12 @@ struct CourseListPage {
       // 搜索和筛选
       this.buildSearchAndFilter()
       
-      // 课程列表
-      this.buildCourseList()
+      // 课程列表可滚动
+      Scroll() {
+        this.buildCourseList()
+      }
+      .flexGrow(1)
+      .width('100%')
     }
     .width('100%')
     .height('100%')
@@ -90,24 +94,24 @@ struct CourseListPage {
             this.searchText = value;
             this.filterCourses();
           })
-          .flexGrow(1)
+          .width('85%')
           .height(40)
           .backgroundColor('#f8f9fa')
           .borderRadius(20)
           .padding({ left: 15, right: 15 })
           .placeholderColor('#999')
-        
         Button('🔍')
-          .width(40)
+          .width('15%')
           .height(40)
           .backgroundColor('#007AFF')
           .borderRadius(20)
           .fontColor(Color.White)
-          .margin({ left: 10 })
           .onClick(() => {
             this.filterCourses();
           })
       }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
       .margin({ bottom: 15 })
 
       // 分类筛选
@@ -193,97 +197,96 @@ struct CourseListPage {
 
   @Builder
   buildCourseItem(course: Course) {
-    Row() {
-      // 课程封面
-      Image(course.coverImage || $r('app.media.foreground'))
-        .width(80)
-        .height(60)
-        .borderRadius(8)
-        .backgroundColor('#f0f0f0')
-      
-      // 课程信息
-      Column() {
-        Text(course.name)
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .margin({ bottom: 5 })
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        
-        Text(course.description)
-          .fontSize(14)
-          .fontColor('#666')
-          .margin({ bottom: 5 })
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        
-        Row() {
-          Text(course.teacherName)
-            .fontSize(12)
-            .fontColor('#999')
-          
-          Text('•')
-            .fontSize(12)
-            .fontColor('#999')
-            .margin({ left: 8, right: 8 })
-          
-          Text(`${course.enrolledCount}人学习`)
-            .fontSize(12)
-            .fontColor('#999')
-          
-          Text('•')
-            .fontSize(12)
-            .fontColor('#999')
-            .margin({ left: 8, right: 8 })
-          
-          Text('人工智能')
-            .fontSize(12)
-            .fontColor('#999')
+    Column() {
+      Row() {
+        // 课程封面
+        Image(course.coverImage || $r('app.media.foreground'))
+          .width(80)
+          .height(60)
+          .borderRadius(8)
+          .backgroundColor('#f0f0f0')
+        // 课程信息
+        Column() {
+          Text(course.name)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .margin({ bottom: 5 })
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(course.description)
+            .fontSize(14)
+            .fontColor('#666')
+            .margin({ bottom: 5 })
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Row() {
+            Text(course.teacherName)
+              .fontSize(12)
+              .fontColor('#999')
+            Text('•')
+              .fontSize(12)
+              .fontColor('#999')
+              .margin({ left: 8, right: 8 })
+            Text(`${course.enrolledCount}人学习`)
+              .fontSize(12)
+              .fontColor('#999')
+            Text('•')
+              .fontSize(12)
+              .fontColor('#999')
+              .margin({ left: 8, right: 8 })
+            Text('人工智能')
+              .fontSize(12)
+              .fontColor('#999')
+          }
         }
+        .alignItems(HorizontalAlign.Start)
+        .flexGrow(1)
+        .margin({ left: 15 })
       }
-      .alignItems(HorizontalAlign.Start)
-      .flexGrow(1)
-      .margin({ left: 15 })
-      
-      // 操作按钮
-      Column() {
+      .width('100%')
+      // 底部操作按钮组横向排列
+      Row() {
         if (this.currentUser?.role === 'student') {
           if (course.isEnrolled) {
             Button('继续学习')
-              .fontSize(12)
-              .height(30)
+              .fontSize(11)
+              .height(28)
+              .width(70)
               .backgroundColor('#007AFF')
-              .borderRadius(15)
+              .borderRadius(14)
               .fontColor(Color.White)
+              .margin({ right: 10 })
               .onClick(() => {
                 this.enterCourse(course);
               })
           } else {
             Button('加入课程')
-              .fontSize(12)
-              .height(30)
+              .fontSize(11)
+              .height(28)
+              .width(70)
               .backgroundColor('#28a745')
-              .borderRadius(15)
+              .borderRadius(14)
               .fontColor(Color.White)
+              .margin({ right: 10 })
               .onClick(() => {
                 this.enrollCourse(course);
               })
           }
         } else {
           Button('管理')
-            .fontSize(12)
-            .height(30)
+            .fontSize(11)
+            .height(28)
+            .width(70)
             .backgroundColor('#007AFF')
-            .borderRadius(15)
+            .borderRadius(14)
             .fontColor(Color.White)
             .onClick(() => {
               this.manageCourse(course);
             })
         }
       }
-      .alignItems(HorizontalAlign.End)
+      .margin({ top: 8 })
     }
-    .width('100%')
     .padding(15)
     .backgroundColor(Color.White)
     .borderRadius(12)
@@ -294,7 +297,29 @@ struct CourseListPage {
   }
 
   filterCourses() {
-    // TODO: 实现课程筛选逻辑
+    this.isLoading = true;
+    
+    setTimeout(() => {
+      let filteredCourses = this.courses;
+      
+      // 按分类筛选
+      if (this.selectedCategory !== 'all') {
+        filteredCourses = filteredCourses.filter(course => course.category === this.selectedCategory);
+      }
+      
+      // 按搜索文本筛选
+      if (this.searchText.trim()) {
+        const searchLower = this.searchText.toLowerCase();
+        filteredCourses = filteredCourses.filter(course => 
+          course.name.toLowerCase().includes(searchLower) ||
+          course.description.toLowerCase().includes(searchLower) ||
+          course.teacherName.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      this.courses = filteredCourses;
+      this.isLoading = false;
+    }, 300);
   }
 
   viewCourseDetail(course: Course) {
@@ -306,7 +331,25 @@ struct CourseListPage {
   }
 
   enrollCourse(course: Course) {
-    // TODO: 实现选课功能
+    if (!this.currentUser) return;
+    
+    // 调用选课函数
+    const success = enrollCourse(this.currentUser.id, course.id);
+    
+    if (success) {
+      // 更新课程状态
+      course.isEnrolled = true;
+      course.enrolledCount++;
+      
+      // 显示成功提示
+      // 这里可以添加Toast提示
+      
+      // 重新加载课程列表
+      this.loadCourses();
+    } else {
+      // 显示失败提示
+      // 这里可以添加Toast提示
+    }
   }
 
   manageCourse(course: Course) {

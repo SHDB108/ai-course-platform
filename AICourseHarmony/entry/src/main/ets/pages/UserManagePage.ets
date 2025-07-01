@@ -81,24 +81,24 @@ struct UserManagePage {
             this.searchText = value;
             this.filterUsers();
           })
-          .flexGrow(1)
+          .width('85%')
           .height(40)
           .backgroundColor('#f8f9fa')
           .borderRadius(20)
           .padding({ left: 15, right: 15 })
           .placeholderColor('#999')
-        
         Button('🔍')
-          .width(40)
+          .width('15%')
           .height(40)
           .backgroundColor('#007AFF')
           .borderRadius(20)
           .fontColor(Color.White)
-          .margin({ left: 10 })
           .onClick(() => {
             this.filterUsers();
           })
       }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
       .margin({ bottom: 15 })
 
       // 角色筛选
@@ -182,74 +182,75 @@ struct UserManagePage {
 
   @Builder
   buildUserItem(user: UserInfo) {
-    Row() {
-      // 用户头像
-      Image(user.avatar || $r('app.media.foreground'))
-        .width(50)
-        .height(50)
-        .borderRadius(25)
-        .backgroundColor('#f0f0f0')
-      
-      // 用户信息
-      Column() {
-        Text(user.realName)
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .margin({ bottom: 5 })
-        
-        Text(`@${user.username}`)
-          .fontSize(14)
-          .fontColor('#666')
-          .margin({ bottom: 5 })
-        
-        Row() {
-          Text(this.getRoleText(user.role))
-            .fontSize(12)
-            .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-            .backgroundColor(this.getRoleColor(user.role))
-            .fontColor(Color.White)
-            .borderRadius(10)
-          
-          Text('•')
-            .fontSize(12)
-            .fontColor('#999')
-            .margin({ left: 8, right: 8 })
-          
-          Text(user.status === 'active' ? '正常' : '禁用')
-            .fontSize(12)
-            .fontColor(user.status === 'active' ? '#28a745' : '#FF3B30')
+    Column() {
+      Row() {
+        // 用户头像
+        Image(user.avatar || $r('app.media.foreground'))
+          .width(50)
+          .height(50)
+          .borderRadius(25)
+          .backgroundColor('#f0f0f0')
+        // 用户信息
+        Column() {
+          Text(user.realName)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .margin({ bottom: 5 })
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(`@${user.username}`)
+            .fontSize(14)
+            .fontColor('#666')
+            .margin({ bottom: 5 })
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Row() {
+            Text(this.getRoleText(user.role))
+              .fontSize(12)
+              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+              .backgroundColor(this.getRoleColor(user.role))
+              .fontColor(Color.White)
+              .borderRadius(10)
+            Text('•')
+              .fontSize(12)
+              .fontColor('#999')
+              .margin({ left: 8, right: 8 })
+            Text(user.status === 'active' ? '正常' : '禁用')
+              .fontSize(12)
+              .fontColor(user.status === 'active' ? '#28a745' : '#FF3B30')
+          }
         }
+        .alignItems(HorizontalAlign.Start)
+        .flexGrow(1)
+        .margin({ left: 15 })
       }
-      .alignItems(HorizontalAlign.Start)
-      .flexGrow(1)
-      .margin({ left: 15 })
-      
-      // 操作按钮
-      Column() {
+      .width('100%')
+      // 底部操作按钮组横向排列
+      Row() {
         Button('编辑')
-          .fontSize(12)
-          .height(30)
+          .fontSize(11)
+          .height(28)
+          .width(70)
           .backgroundColor('#007AFF')
-          .borderRadius(15)
+          .borderRadius(14)
           .fontColor(Color.White)
+          .margin({ right: 10 })
           .onClick(() => {
             this.editUser(user);
           })
-          .margin({ bottom: 5 })
-        
         Button(user.status === 'active' ? '禁用' : '启用')
-          .fontSize(12)
-          .height(30)
+          .fontSize(11)
+          .height(28)
+          .width(70)
           .backgroundColor(user.status === 'active' ? '#FF3B30' : '#28a745')
-          .borderRadius(15)
+          .borderRadius(14)
           .fontColor(Color.White)
           .onClick(() => {
             this.toggleUserStatus(user);
           })
       }
-      .alignItems(HorizontalAlign.End)
+      .margin({ top: 8 })
     }
-    .width('100%')
     .padding(15)
     .backgroundColor(Color.White)
     .borderRadius(12)
@@ -260,7 +261,29 @@ struct UserManagePage {
   }
 
   filterUsers() {
-    // TODO: 实现用户筛选逻辑
+    this.isLoading = true;
+    
+    setTimeout(() => {
+      let filteredUsers = users;
+      
+      // 按角色筛选
+      if (this.selectedRole !== 'all') {
+        filteredUsers = filteredUsers.filter(user => user.role === this.selectedRole);
+      }
+      
+      // 按搜索文本筛选
+      if (this.searchText.trim()) {
+        const searchLower = this.searchText.toLowerCase();
+        filteredUsers = filteredUsers.filter(user => 
+          user.realName.toLowerCase().includes(searchLower) ||
+          user.username.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      this.userList = filteredUsers;
+      this.isLoading = false;
+    }, 300);
   }
 
   viewUserDetail(user: UserInfo) {
@@ -268,11 +291,26 @@ struct UserManagePage {
   }
 
   editUser(user: UserInfo) {
-    // TODO: 跳转到编辑用户页面
+    // 将用户信息传递到编辑页面
+    router.pushUrl({ 
+      url: 'pages/EditUserPage',
+      params: { userId: user.id }
+    });
   }
 
   toggleUserStatus(user: UserInfo) {
-    // TODO: 实现用户状态切换
+    const userIndex = users.findIndex(u => u.id === user.id);
+    if (userIndex === -1) return;
+    
+    // 切换用户状态
+    users[userIndex].status = user.status === 'active' ? 'inactive' : 'active';
+    
+    // 更新当前用户列表
+    this.loadUsers();
+    
+    // 显示提示信息
+    const newStatus = users[userIndex].status === 'active' ? '启用' : '禁用';
+    // 这里可以添加Toast提示
   }
 
   getRoleText(role: UserRole): string {

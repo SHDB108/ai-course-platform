@@ -100,8 +100,12 @@ struct QuizListPage {
       // 筛选标签
       this.buildFilterTabs()
       
-      // 测验列表
-      this.buildQuizList()
+      // 测验列表可滚动
+      Scroll() {
+        this.buildQuizList()
+      }
+      .flexGrow(1)
+      .width('100%')
     }
     .width('100%')
     .height('100%')
@@ -212,7 +216,7 @@ struct QuizListPage {
             .fontSize(14)
             .fontColor('#666')
             .margin({ bottom: 5 })
-            .maxLines(2)
+            .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           
           Row() {
@@ -243,89 +247,63 @@ struct QuizListPage {
         }
         .alignItems(HorizontalAlign.Start)
         .flexGrow(1)
-        
-        // 状态和操作
-        Column() {
-          // 状态标签
+      }
+      .width('100%')
+      // 底部操作按钮组横向排列
+      Row() {
+        if (this.currentUser?.role === 'student') {
           if (this.getSubmissionByQuizId(quiz.id)) {
-            Text('已完成')
-              .fontSize(12)
-              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-              .backgroundColor('#28a745')
-              .fontColor(Color.White)
-              .borderRadius(10)
-              .margin({ bottom: 8 })
-            
-            Text(`得分：${this.getSubmissionByQuizId(quiz.id)?.totalScore || 0}`)
-              .fontSize(12)
-              .fontColor('#28a745')
-          } else if (this.isQuizExpired(quiz.endTime)) {
-            Text('已过期')
-              .fontSize(12)
-              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-              .backgroundColor('#FF3B30')
-              .fontColor(Color.White)
-              .borderRadius(10)
-              .margin({ bottom: 8 })
-          } else {
-            Text('进行中')
-              .fontSize(12)
-              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+            Button('查看结果')
+              .fontSize(11)
+              .height(28)
+              .width(70)
               .backgroundColor('#007AFF')
+              .borderRadius(14)
               .fontColor(Color.White)
-              .borderRadius(10)
-              .margin({ bottom: 8 })
-          }
-          
-          // 操作按钮
-          if (this.currentUser?.role === 'student') {
-            if (this.getSubmissionByQuizId(quiz.id)) {
-              Button('查看结果')
-                .fontSize(12)
-                .height(30)
-                .backgroundColor('#007AFF')
-                .borderRadius(15)
-                .fontColor(Color.White)
-                .onClick(() => {
-                  this.viewResult(quiz, this.getSubmissionByQuizId(quiz.id));
-                })
-            } else if (!this.isQuizExpired(quiz.endTime)) {
-              Button('开始答题')
-                .fontSize(12)
-                .height(30)
-                .backgroundColor('#28a745')
-                .borderRadius(15)
-                .fontColor(Color.White)
-                .onClick(() => {
-                  this.startQuiz(quiz);
-                })
-            } else {
-              Button('查看详情')
-                .fontSize(12)
-                .height(30)
-                .backgroundColor('#999')
-                .borderRadius(15)
-                .fontColor(Color.White)
-                .onClick(() => {
-                  this.viewQuizDetail(quiz);
-                })
-            }
-          } else {
-            Button('管理')
-              .fontSize(12)
-              .height(30)
-              .backgroundColor('#007AFF')
-              .borderRadius(15)
-              .fontColor(Color.White)
+              .margin({ right: 10 })
               .onClick(() => {
-                this.manageQuiz(quiz);
+                this.viewResult(quiz, this.getSubmissionByQuizId(quiz.id));
+              })
+          } else if (!this.isQuizExpired(quiz.endTime)) {
+            Button('开始答题')
+              .fontSize(11)
+              .height(28)
+              .width(70)
+              .backgroundColor('#28a745')
+              .borderRadius(14)
+              .fontColor(Color.White)
+              .margin({ right: 10 })
+              .onClick(() => {
+                this.startQuiz(quiz);
+              })
+          } else {
+            Button('查看详情')
+              .fontSize(11)
+              .height(28)
+              .width(70)
+              .backgroundColor('#999')
+              .borderRadius(14)
+              .fontColor(Color.White)
+              .margin({ right: 10 })
+              .onClick(() => {
+                this.viewQuizDetail(quiz);
               })
           }
+        } else {
+          Button('管理')
+            .fontSize(11)
+            .height(28)
+            .width(70)
+            .backgroundColor('#007AFF')
+            .borderRadius(14)
+            .fontColor(Color.White)
+            .onClick(() => {
+              this.manageQuiz(quiz);
+            })
         }
-        .alignItems(HorizontalAlign.End)
       }
+      .margin({ top: 8 })
     }
-    .width('100%')
     .padding(15)
     .backgroundColor(Color.White)
     .borderRadius(12)
@@ -340,7 +318,25 @@ struct QuizListPage {
   }
 
   filterQuizzes() {
-    // TODO: 实现测验筛选逻辑
+    this.isLoading = true;
+    
+    setTimeout(() => {
+      let filteredQuizzes = this.quizzes;
+      
+      // 按类型筛选
+      if (this.selectedType === 'quiz') {
+        filteredQuizzes = filteredQuizzes.filter(quiz => quiz.type === 'quiz');
+      } else if (this.selectedType === 'assignment') {
+        filteredQuizzes = filteredQuizzes.filter(quiz => quiz.type === 'assignment');
+      } else if (this.selectedType === 'completed') {
+        filteredQuizzes = filteredQuizzes.filter(quiz => 
+          this.submissions.some(sub => sub.quizId === quiz.id)
+        );
+      }
+      
+      this.quizzes = filteredQuizzes;
+      this.isLoading = false;
+    }, 300);
   }
 
   viewQuizDetail(quiz: Quiz) {
