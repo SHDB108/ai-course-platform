@@ -333,4 +333,54 @@ export function getQuizStatistics(quizId: string): QuizStatistics {
     highestScore: Math.max(...scores),
     lowestScore: Math.min(...scores)
   } as QuizStatistics;
+}
+
+/**
+ * 新建测验，返回新测验id
+ */
+export function createQuiz(quiz: Quiz): string {
+  const id = (Date.now() + Math.floor(Math.random() * 1000)).toString();
+  const now = new Date().toISOString();
+  const newQuiz: Quiz = {
+    id: id,
+    courseId: quiz.courseId,
+    title: quiz.title,
+    description: quiz.description,
+    type: quiz.type,
+    totalScore: quiz.totalScore,
+    timeLimit: quiz.timeLimit,
+    startTime: quiz.startTime,
+    endTime: quiz.endTime,
+    status: 'draft',
+    isAutoGrade: quiz.isAutoGrade,
+    createTime: now,
+    updateTime: now
+  };
+  quizzes.push(newQuiz);
+  return id;
+}
+
+/**
+ * 更新测验，返回是否成功
+ */
+export function updateQuiz(quizId: string, update: Quiz): boolean {
+  const idx = quizzes.findIndex(q => q.id === quizId);
+  if (idx === -1) return false;
+  const old = quizzes[idx];
+  quizzes[idx] = {
+    id: old.id,
+    courseId: update.courseId,
+    title: update.title,
+    description: update.description,
+    type: update.type,
+    totalScore: update.totalScore,
+    timeLimit: update.timeLimit,
+    startTime: update.startTime,
+    endTime: update.endTime,
+    status: update.status,
+    isAutoGrade: update.isAutoGrade,
+    createTime: old.createTime,
+    updateTime: new Date().toISOString()
+  };
+  return true;
 } 

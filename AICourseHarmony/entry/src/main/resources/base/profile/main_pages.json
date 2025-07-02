@@ -9,6 +9,12 @@
     "pages/SystemSettingPage",
     "pages/CourseListPage",
     "pages/QuizListPage",
-    "pages/LearningProgressPage"
+    "pages/LearningProgressPage",
+    "pages/EditCoursePage",
+    "pages/EditQuizPage",
+    "pages/SystemLogPage",
+    "pages/UserAgreementPage",
+    "pages/PrivacyPolicyPage",
+    "pages/FeedbackPage"
   ]
 }

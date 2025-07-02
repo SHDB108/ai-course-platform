@@ -181,4 +181,72 @@ export function searchCourses(keyword: string, teacherId?: string, semester?: st
     
     return matchesKeyword && matchesTeacher && matchesSemester && course.status === 'active';
   });
+}
+
+/**
+ * 新建课程，返回新课程id
+ */
+export function createCourse(course: Course): string {
+  const id = (Date.now() + Math.floor(Math.random() * 1000)).toString();
+  const now = new Date().toISOString();
+  const newCourse: Course = {
+    id: id,
+    courseCode: course.courseCode,
+    name: course.name,
+    title: course.title,
+    description: course.description,
+    credits: course.credits,
+    hours: course.hours,
+    teacherId: course.teacherId,
+    teacherName: course.teacherName,
+    semester: course.semester,
+    department: course.department,
+    classroom: course.classroom,
+    schedule: course.schedule,
+    capacity: course.capacity,
+    enrolledCount: 0,
+    studentCount: 0,
+    category: course.category,
+    status: 'active',
+    createTime: now,
+    updateTime: now,
+    coverImage: course.coverImage,
+    isEnrolled: course.isEnrolled
+  };
+  courses.push(newCourse);
+  return id;
+}
+
+/**
+ * 更新课程，返回是否成功
+ */
+export function updateCourse(courseId: string, update: Course): boolean {
+  const idx = courses.findIndex(c => c.id === courseId);
+  if (idx === -1) return false;
+  const old = courses[idx];
+  courses[idx] = {
+    id: old.id,
+    courseCode: update.courseCode,
+    name: update.name,
+    title: update.title,
+    description: update.description,
+    credits: update.credits,
+    hours: update.hours,
+    teacherId: update.teacherId,
+    teacherName: update.teacherName,
+    semester: update.semester,
+    department: update.department,
+    classroom: update.classroom,
+    schedule: update.schedule,
+    capacity: update.capacity,
+    enrolledCount: old.enrolledCount,
+    studentCount: old.studentCount,
+    category: update.category,
+    status: update.status,
+    createTime: old.createTime,
+    updateTime: new Date().toISOString(),
+    coverImage: update.coverImage,
+    isEnrolled: update.isEnrolled
+  };
+  return true;
 } 

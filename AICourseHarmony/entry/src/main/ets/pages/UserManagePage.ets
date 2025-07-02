@@ -1,6 +1,10 @@
 import router from '@ohos.router';
 import { getCurrentUser, users, UserInfo, UserRole } from '../common/UserStore';
 
+interface UserIdParams {
+  userId: string;
+}
+
 @Entry
 @Component
 struct UserManagePage {
@@ -291,10 +295,10 @@ struct UserManagePage {
   }
 
   editUser(user: UserInfo) {
-    // 将用户信息传递到编辑页面
+    const userIdParams: UserIdParams = { userId: user.id };
     router.pushUrl({ 
       url: 'pages/EditUserPage',
-      params: { userId: user.id }
+      params: userIdParams
     });
   }
 
