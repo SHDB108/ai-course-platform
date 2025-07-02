@@ -1,5 +1,6 @@
 import router from '@ohos.router';
-import { users, UserInfo, UserRole, getCurrentUser } from '../common/UserStore';
+import { getCurrentUser, users } from '../common/UserStore';
+import { UserInfo, UserRole } from '../common/UserTypes';
 
 interface EditUserPageParams {
   userId?: string;
@@ -21,6 +22,12 @@ interface EditForm {
   title: string;
 }
 
+// 编辑用户页面，支持用户信息的查看、编辑与保存
+
+/**
+ * 编辑用户页面组件
+ * 用于展示和编辑指定用户的详细信息
+ */
 @Entry
 @Component
 struct EditUserPage {

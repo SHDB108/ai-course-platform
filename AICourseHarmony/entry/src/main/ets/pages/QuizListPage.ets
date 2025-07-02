@@ -1,17 +1,31 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
-import { getQuizzesByCourse, getStudentSubmissions, Quiz, QuizSubmission } from '../common/QuizStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
+import { getQuizzesByCourse, getStudentSubmissions, getAllQuizzes } from '../common/QuizStore';
+import { Quiz, QuizSubmission } from '../common/QuizTypes';
 import { getEnrolledCourses } from '../common/CourseStore';
 
+/**
+ * 测验列表页面，支持测验的筛选、搜索、管理等功能
+ */
 @Entry
 @Component
 struct QuizListPage {
   @State currentUser: UserInfo | null = getCurrentUser();
+  /** 全部测验数据（用于筛选） */
+  @State allQuizzes: Quiz[] = [];
+  /** 当前筛选/搜索后的测验数据 */
   @State quizzes: Quiz[] = [];
   @State submissions: QuizSubmission[] = [];
   @State selectedType: string = 'all';
+  /** 搜索关键词 */
+  @State searchText: string = '';
+  /** 加载状态 */
   @State isLoading: boolean = false;
 
+  /**
+   * 页面每次显示时自动刷新测验数据
+   */
   aboutToAppear() {
     if (!this.currentUser) {
       router.replaceUrl({ url: 'pages/LoginPage' });
@@ -20,54 +34,29 @@ struct QuizListPage {
     this.loadQuizzes();
   }
 
+  /**
+   * 加载全部测验数据，并根据筛选条件刷新显示
+   */
   loadQuizzes() {
     this.isLoading = true;
     
     // 模拟网络延迟
     setTimeout(() => {
       if (this.currentUser) {
-        // 这里应该根据用户角色和课程加载测验
-        // 暂时加载所有测验作为示例
-        this.quizzes = [
-          {
-            id: '1',
-            courseId: '1',
-            title: '人工智能基础知识测验',
-            description: '测试对人工智能基本概念的理解',
-            type: 'quiz',
-            totalScore: 100,
-            timeLimit: 60,
-            startTime: '2024-01-15 09:00:00',
-            endTime: '2024-01-15 10:00:00',
-            status: 'published',
-            isAutoGrade: true,
-            createTime: '2024-01-10 00:00:00',
-            updateTime: '2024-01-10 00:00:00'
-          },
-          {
-            id: '2',
-            courseId: '1',
-            title: 'AI应用案例分析作业',
-            description: '分析一个实际的人工智能应用案例',
-            type: 'assignment',
-            totalScore: 50,
-            startTime: '2024-01-20 00:00:00',
-            endTime: '2024-01-27 23:59:59',
-            status: 'published',
-            isAutoGrade: false,
-            createTime: '2024-01-18 00:00:00',
-            updateTime: '2024-01-18 00:00:00'
-          }
-        ];
-        
+        // 统一从全局QuizStore获取所有测验
+        this.allQuizzes = getAllQuizzes();
         if (this.currentUser.role === 'student') {
           this.submissions = getStudentSubmissions(this.currentUser.id);
         }
       }
+      this.filterQuizzes();
       this.isLoading = false;
     }, 500);
   }
 
+  /**
+   * 页面主结构
+   */
   build() {
     Column() {
       // 顶部导航栏
@@ -140,6 +129,9 @@ struct QuizListPage {
       })
   }
 
+  /**
+   * 测验列表渲染
+   */
   @Builder
   buildQuizList() {
     if (this.isLoading) {
@@ -187,6 +179,9 @@ struct QuizListPage {
     }
   }
 
+  /**
+   * 单个测验卡片渲染
+   */
   @Builder
   buildQuizItem(quiz: Quiz) {
     Column() {
@@ -317,11 +312,14 @@ struct QuizListPage {
     return this.submissions.find(s => s.quizId === quizId);
   }
 
+  /**
+   * 筛选测验
+   */
   filterQuizzes() {
     this.isLoading = true;
     
     setTimeout(() => {
-      let filteredQuizzes = this.quizzes;
+      let filteredQuizzes = this.allQuizzes;
       
       // 按类型筛选
       if (this.selectedType === 'quiz') {
@@ -351,8 +349,11 @@ struct QuizListPage {
     // TODO: 跳转到结果查看页面
   }
 
+  /**
+   * 跳转到测验编辑页面
+   */
   manageQuiz(quiz: Quiz) {
-    // TODO: 跳转到测验管理页面
+    router.pushUrl({ url: 'pages/EditQuizPage', params: { quizId: quiz.id } });
   }
 
   isQuizExpired(endTime: string): boolean {

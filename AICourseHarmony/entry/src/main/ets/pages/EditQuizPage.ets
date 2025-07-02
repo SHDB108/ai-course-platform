@@ -1,7 +1,10 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
-import { getQuizById, createQuiz, updateQuiz, Quiz } from '../common/QuizStore';
-import { getEnrolledCourses, getAllCourses, Course } from '../common/CourseStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
+import { getQuizById, createQuiz, updateQuiz } from '../common/QuizStore';
+import { Quiz } from '../common/QuizTypes';
+import { getEnrolledCourses, getAllCourses } from '../common/CourseStore';
+import { Course } from '../common/CourseTypes';
 
 // 声明FormField接口
 interface FormField {
@@ -19,6 +22,12 @@ interface RouteParams {
   quizId?: string;
 }
 
+// 编辑测验页面，支持测验信息的查看、编辑与保存
+
+/**
+ * 编辑测验页面组件
+ * 用于展示和编辑指定测验的详细信息
+ */
 @Entry
 @Component
 struct EditQuizPage {
@@ -41,13 +50,13 @@ struct EditQuizPage {
     createTime: '',
     updateTime: ''
   };
+  @State isSaving: boolean = false;
 
   aboutToAppear() {
     if (!this.currentUser) {
       router.replaceUrl({ url: 'pages/LoginPage' });
       return;
     }
-
     this.loadCourses();
 
     // 检查是否有传入的测验ID（编辑模式）
@@ -95,24 +104,24 @@ struct EditQuizPage {
   @Builder
   buildHeader() {
     Row() {
-      Button('←')
+      Button('\u2190')
         .fontSize(20)
         .backgroundColor(Color.Transparent)
         .fontColor('#007AFF')
         .onClick(() => {
           router.back();
         })
-      
-      Text(this.isEdit ? '编辑测验' : '新建测验')
+      Text(this.isEdit ? '\u7f16\u8f91\u6d4b\u9a8c' : '\u65b0\u5efa\u6d4b\u9a8c')
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .flexGrow(1)
         .textAlign(TextAlign.Center)
       
-      Button('保存')
+      Button('\u4fdd\u5b58')
         .fontSize(16)
         .backgroundColor(Color.Transparent)
         .fontColor('#007AFF')
+        .enabled(!this.isSaving)
         .onClick(() => {
           this.saveQuiz();
         })
@@ -150,12 +159,12 @@ struct EditQuizPage {
           {
             label: '测验类型',
             placeholder: '请选择测验类型',
-            value: this.quizData.type,
+            value: this.quizData.type === 'quiz' ? '测验' : '作业',
             onChange: (value: string) => {
-              this.quizData.type = value as 'quiz' | 'assignment';
+              this.quizData.type = value === '测验' ? 'quiz' : 'assignment';
             },
             type: 'select',
-            options: ['quiz', 'assignment']
+            options: ['测验', '作业']
           } as FormField
         ] as FormField[])
 
@@ -164,12 +173,13 @@ struct EditQuizPage {
           {
             label: '所属课程',
             placeholder: '请选择课程',
-            value: this.quizData.courseId,
+            value: this.courses.find(c => c.id === this.quizData.courseId)?.name || '',
             onChange: (value: string) => {
-              this.quizData.courseId = value;
+              const course = this.courses.find(c => c.name === value);
+              this.quizData.courseId = course ? course.id : '';
             },
             type: 'select',
-            options: this.courses.map(course => course.id)
+            options: this.courses.map(course => course.name)
           } as FormField
         ] as FormField[])
 
@@ -196,12 +206,12 @@ struct EditQuizPage {
           {
             label: '自动批改',
             placeholder: '是否启用自动批改',
-            value: this.quizData.isAutoGrade ? 'true' : 'false',
+            value: this.quizData.isAutoGrade ? '是' : '否',
             onChange: (value: string) => {
-              this.quizData.isAutoGrade = value === 'true';
+              this.quizData.isAutoGrade = value === '是';
             },
             type: 'select',
-            options: ['true', 'false']
+            options: ['是', '否']
           } as FormField
         ] as FormField[])
 
@@ -233,7 +243,7 @@ struct EditQuizPage {
   }
 
   @Builder
-  buildFormSection(title: string, fields: FormField[]) {
+  buildFormSection(title: string, fields: FormField[]): void {
     Column() {
       Text(title)
         .fontSize(16)
@@ -253,7 +263,7 @@ struct EditQuizPage {
   }
 
   @Builder
-  buildFormField(field: FormField) {
+  buildFormField(field: FormField): void {
     Column() {
       Text(field.label)
         .fontSize(14)
@@ -315,25 +325,32 @@ struct EditQuizPage {
   }
 
   saveQuiz() {
+    if (this.isSaving) return;
+    this.isSaving = true;
     // 验证必填字段
     if (!this.quizData.title.trim()) {
       this.showError('请输入测验标题');
+      this.isSaving = false;
       return;
     }
     if (!this.quizData.description.trim()) {
       this.showError('请输入测验描述');
+      this.isSaving = false;
       return;
     }
     if (!this.quizData.courseId) {
       this.showError('请选择所属课程');
+      this.isSaving = false;
       return;
     }
     if (!this.quizData.startTime) {
       this.showError('请设置开始时间');
+      this.isSaving = false;
       return;
     }
     if (!this.quizData.endTime) {
       this.showError('请设置结束时间');
+      this.isSaving = false;
       return;
     }
 
@@ -342,6 +359,7 @@ struct EditQuizPage {
     const endTime = new Date(this.quizData.endTime);
     if (startTime >= endTime) {
       this.showError('结束时间必须晚于开始时间');
+      this.isSaving = false;
       return;
     }
 
@@ -386,13 +404,13 @@ struct EditQuizPage {
     }
 
     if (success) {
-      this.showSuccess(this.isEdit ? '测验更新成功' : '测验创建成功');
-      setTimeout(() => {
-        router.back();
-      }, 1500);
+      this.showSuccess(this.isEdit ? '\u6d4b\u9a8c\u66f4\u65b0\u6210\u529f' : '\u6d4b\u9a8c\u521b\u5efa\u6210\u529f');
+      // 立即跳转到测验列表页
+      router.replaceUrl({ url: 'pages/QuizListPage' });
     } else {
-      this.showError(this.isEdit ? '测验更新失败' : '测验创建失败');
+      this.showError(this.isEdit ? '\u6d4b\u9a8c\u66f4\u65b0\u5931\u8d25' : '\u6d4b\u9a8c\u521b\u5efa\u5931\u8d25');
     }
+    this.isSaving = false;
   }
 
   showError(message: string) {

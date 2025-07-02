@@ -4,6 +4,13 @@ import { window } from '@kit.ArkUI';
 
 const DOMAIN = 0x0000;
 
+// 应用主Ability，负责应用启动、页面路由与全局初始化
+
+/**
+ * 应用主Ability类
+ * 负责应用启动、页面路由、全局数据初始化等
+ */
+
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);

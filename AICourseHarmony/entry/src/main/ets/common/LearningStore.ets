@@ -1,3 +1,8 @@
+// 学习进度全局数据与管理方法
+
+/**
+ * 全部学习进度数据（全局变量，页面间共享）
+ */
 export interface LearningResource {
   id: string;
   courseId: string;

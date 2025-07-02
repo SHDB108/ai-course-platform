@@ -1,6 +1,13 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 
+// 用户协议页面，展示平台用户协议内容
+
+/**
+ * 用户协议页面组件
+ * 展示平台用户协议的详细内容
+ */
 @Entry
 @Component
 struct UserAgreementPage {
@@ -26,20 +33,18 @@ struct UserAgreementPage {
   @Builder
   buildHeader() {
     Row() {
-      Button('←')
+      Button('\u2190')
         .fontSize(20)
         .backgroundColor(Color.Transparent)
         .fontColor('#007AFF')
         .onClick(() => {
           router.back();
         })
-      
-      Text('用户协议')
+      Text('\u7528\u6237\u534f\u8bae')
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .flexGrow(1)
         .textAlign(TextAlign.Center)
-      
       Button('')
         .fontSize(16)
         .backgroundColor(Color.Transparent)

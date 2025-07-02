@@ -1,5 +1,6 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 
 // 声明FormField接口
 interface FormField {
@@ -25,6 +26,12 @@ interface Feedback {
   userName: string;
 }
 
+// 反馈页面，支持用户提交意见和建议
+
+/**
+ * 反馈页面组件
+ * 提供用户反馈表单与提交逻辑
+ */
 @Entry
 @Component
 struct FeedbackPage {
@@ -56,21 +63,19 @@ struct FeedbackPage {
   @Builder
   buildHeader() {
     Row() {
-      Button('←')
+      Button('\u2190')
         .fontSize(20)
         .backgroundColor(Color.Transparent)
         .fontColor('#007AFF')
         .onClick(() => {
           router.back();
         })
-      
-      Text('意见反馈')
+      Text('\u610f\u89c1\u53cd\u9988')
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .flexGrow(1)
         .textAlign(TextAlign.Center)
-      
-      Button('提交')
+      Button('\u63d0\u4ea4')
         .fontSize(16)
         .backgroundColor(Color.Transparent)
         .fontColor(this.isSubmitting ? '#999' : '#007AFF')

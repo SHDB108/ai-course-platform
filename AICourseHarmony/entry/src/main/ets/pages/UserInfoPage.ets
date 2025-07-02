@@ -1,5 +1,6 @@
 import router from '@ohos.router';
-import { getCurrentUser, updateUserInfo, UserInfo } from '../common/UserStore';
+import { getCurrentUser, updateUserInfo } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 
 interface EditForm {
   realName: string;
@@ -11,6 +12,12 @@ interface EditForm {
   title?: string;
 }
 
+// 用户信息页面，展示和编辑当前用户的个人信息
+
+/**
+ * 用户信息页面组件
+ * 展示和编辑当前用户的详细信息
+ */
 @Entry
 @Component
 struct UserInfoPage {
@@ -303,7 +310,26 @@ struct UserInfoPage {
 
     // 模拟网络请求
     setTimeout(() => {
-      const success = updateUserInfo(this.editForm);
+      // 类型转换：将editForm和currentUser属性手动合成UserInfo对象
+      const userInfo: UserInfo = {
+        id: this.currentUser!.id,
+        username: this.currentUser!.username,
+        password: this.currentUser!.password,
+        role: this.currentUser!.role,
+        avatar: this.currentUser!.avatar,
+        realName: this.editForm.realName,
+        email: this.editForm.email,
+        phone: this.editForm.phone,
+        major: this.editForm.major,
+        grade: this.editForm.grade,
+        department: this.editForm.department,
+        title: this.editForm.title,
+        studentId: this.currentUser!.studentId,
+        teacherId: this.currentUser!.teacherId,
+        status: this.currentUser!.status,
+        createTime: this.currentUser!.createTime
+      };
+      const success = updateUserInfo(userInfo);
       
       if (success) {
         this.message = '保存成功';

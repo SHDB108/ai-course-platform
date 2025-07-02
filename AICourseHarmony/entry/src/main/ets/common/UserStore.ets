@@ -1,75 +1,96 @@
-export type UserRole = 'student' | 'teacher' | 'admin';
+import { UserInfo, UserRole } from './UserTypes';
 
-export interface UserInfo {
-  id: string;
-  username: string;
-  password: string;
-  role: UserRole;
-  realName: string;
-  email: string;
-  phone: string;
-  avatar?: string;
-  status: 'active' | 'inactive';
-  createTime: string;
-  lastLoginTime?: string;
-  // 学生特有字段
-  studentId?: string;
-  major?: string;
-  grade?: string;
-  // 教师特有字段
-  teacherId?: string;
-  department?: string;
-  title?: string;
-}
+/**
+ * 用户全局数据与管理方法
+ */
 
-// 本地写死的用户数据
-export const users: UserInfo[] = [
-  { 
+/**
+ * 全部用户数据（全局变量，页面间共享）
+ */
+export let users: UserInfo[] = [
+  {
     id: '1',
-    username: 'admin', 
-    password: 'admin123', 
+    username: 'admin',
+    password: 'admin123',
     role: 'admin',
-    realName: '系统管理员',
-    email: 'admin@aicourse.com',
-    phone: '13800138000',
+    realName: '管理员',
+    email: 'admin@example.com',
+    phone: '12345678901',
+    avatar: '',
     status: 'active',
-    createTime: '2024-01-01 00:00:00'
+    createTime: '2024-01-01T00:00:00Z',
+    lastLoginTime: '',
+    studentId: '',
+    major: '',
+    grade: '',
+    teacherId: '',
+    department: '',
+    title: ''
   },
-  { 
+  {
     id: '2',
-    username: 'teacher1', 
-    password: 'teacher123', 
+    username: 'teacher1',
+    password: 'teacher123',
     role: 'teacher',
-    realName: '张教授',
-    email: 'zhang@aicourse.com',
-    phone: '13800138001',
+    realName: '张老师',
+    email: 'teacher1@example.com',
+    phone: '12345678902',
+    avatar: '',
     status: 'active',
-    createTime: '2024-01-01 00:00:00',
+    createTime: '2024-01-01T00:00:00Z',
+    lastLoginTime: '',
+    studentId: '',
+    major: '',
+    grade: '',
     teacherId: 'T001',
-    department: '计算机学院',
-    title: '教授'
+    department: '人工智能学院',
+    title: '副教授'
   },
-  { 
+  {
     id: '3',
-    username: 'student1', 
-    password: 'student123', 
+    username: 'student1',
+    password: 'student123',
     role: 'student',
     realName: '李同学',
-    email: 'li@aicourse.com',
-    phone: '13800138002',
+    email: 'student1@example.com',
+    phone: '12345678903',
+    avatar: '',
     status: 'active',
-    createTime: '2024-01-01 00:00:00',
+    createTime: '2024-01-01T00:00:00Z',
+    lastLoginTime: '',
     studentId: 'S001',
-    major: '计算机科学与技术',
-    grade: '2024级'
+    major: '人工智能',
+    grade: '2021',
+    teacherId: '',
+    department: '人工智能学院',
+    title: ''
   }
 ];
-
-// 当前登录用户信息（全局状态，后续可用AppStorage或单例管理）
 export let currentUser: UserInfo | null = null;
 
+/**
+ * 获取所有用户
+ */
+export function getAllUsers(): UserInfo[] {
+  return users;
+}
+
+/**
+ * 根据ID获取用户详情
+ */
+export function getUserById(id: string): UserInfo | undefined {
+  return users.find((user: UserInfo) => user.id === id);
+}
+
+/**
+ * 获取当前登录用户
+ */
+export function getCurrentUser(): UserInfo | null {
+  return currentUser;
+}
+
 export function login(username: string, password: string): UserInfo | null {
-  const user = users.find(u => u.username === username && u.password === password && u.status === 'active');
+  const user: UserInfo | undefined = users.find((u: UserInfo) => u.username === username && u.password === password && u.status === 'active');
   if (user) {
     currentUser = {
       id: user.id,
@@ -95,42 +116,65 @@ export function login(username: string, password: string): UserInfo | null {
   return null;
 }
 
-export function logout() {
+export function logout(): void {
   currentUser = null;
 }
 
-export function getCurrentUser(): UserInfo | null {
-  return currentUser;
+export function updateUserInfo(userInfo: UserInfo): boolean {
+  if (!currentUser) return false;
+  const userIndex: number = users.findIndex((u: UserInfo) => u.id === currentUser!.id);
+  if (userIndex === -1) return false;
+  users[userIndex].realName = userInfo.realName;
+  users[userIndex].email = userInfo.email;
+  users[userIndex].phone = userInfo.phone;
+  users[userIndex].avatar = userInfo.avatar;
+  users[userIndex].status = userInfo.status;
+  users[userIndex].lastLoginTime = userInfo.lastLoginTime;
+  users[userIndex].studentId = userInfo.studentId;
+  users[userIndex].major = userInfo.major;
+  users[userIndex].grade = userInfo.grade;
+  users[userIndex].teacherId = userInfo.teacherId;
+  users[userIndex].department = userInfo.department;
+  users[userIndex].title = userInfo.title;
+  currentUser = users[userIndex];
+  return true;
 }
 
-export function updateUserInfo(userInfo: Partial<UserInfo>): boolean {
-  if (!currentUser) return false;
-  
-  const userIndex = users.findIndex(u => u.id === currentUser!.id);
+/**
+ * 新建用户，返回新用户ID
+ */
+export function createUser(user: UserInfo): string {
+  users.push(user);
+  return user.id;
+}
+
+/**
+ * 更新用户信息
+ */
+export function updateUser(userId: string, update: UserInfo): boolean {
+  const userIndex: number = users.findIndex((u: UserInfo) => u.id === userId);
   if (userIndex === -1) return false;
-  
-  // 更新users数组中的用户信息
-  const updatedUser: UserInfo = {
-    id: users[userIndex].id,
-    username: users[userIndex].username,
-    password: users[userIndex].password,
-    role: users[userIndex].role,
-    realName: userInfo.realName ?? users[userIndex].realName,
-    email: userInfo.email ?? users[userIndex].email,
-    phone: userInfo.phone ?? users[userIndex].phone,
-    avatar: userInfo.avatar ?? users[userIndex].avatar,
-    status: users[userIndex].status,
-    createTime: users[userIndex].createTime,
-    lastLoginTime: users[userIndex].lastLoginTime,
-    studentId: userInfo.studentId ?? users[userIndex].studentId,
-    major: userInfo.major ?? users[userIndex].major,
-    grade: userInfo.grade ?? users[userIndex].grade,
-    teacherId: userInfo.teacherId ?? users[userIndex].teacherId,
-    department: userInfo.department ?? users[userIndex].department,
-    title: userInfo.title ?? users[userIndex].title
-  };
-  
-  users[userIndex] = updatedUser;
-  currentUser = updatedUser;
+  users[userIndex].realName = update.realName;
+  users[userIndex].email = update.email;
+  users[userIndex].phone = update.phone;
+  users[userIndex].avatar = update.avatar;
+  users[userIndex].status = update.status;
+  users[userIndex].lastLoginTime = update.lastLoginTime;
+  users[userIndex].studentId = update.studentId;
+  users[userIndex].major = update.major;
+  users[userIndex].grade = update.grade;
+  users[userIndex].teacherId = update.teacherId;
+  users[userIndex].department = update.department;
+  users[userIndex].title = update.title;
+  return true;
+}
+
+/**
+ * 删除用户
+ */
+export function deleteUser(userId: string): boolean {
+  const userIndex: number = users.findIndex((u: UserInfo) => u.id === userId);
+  if (userIndex === -1) return false;
+  users.splice(userIndex, 1);
   return true;
 } 

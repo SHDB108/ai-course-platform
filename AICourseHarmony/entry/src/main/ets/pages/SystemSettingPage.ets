@@ -1,5 +1,6 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 
 interface SettingOption {
   label: string;
@@ -36,6 +37,12 @@ interface AlertDialogOptions {
   secondaryButton: AlertDialogButton;
 }
 
+// 系统设置页面，支持平台相关设置的查看与修改
+
+/**
+ * 系统设置页面组件
+ * 提供平台相关设置的查看与修改功能
+ */
 @Entry
 @Component
 struct SystemSettingPage {

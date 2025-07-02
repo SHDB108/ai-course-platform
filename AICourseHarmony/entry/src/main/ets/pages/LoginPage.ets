@@ -1,6 +1,13 @@
 import router from '@ohos.router';
-import { login, UserInfo } from '../common/UserStore';
+import { login } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 
+// 登录页面，支持用户登录与身份验证
+
+/**
+ * 登录页面组件
+ * 提供用户登录表单与身份校验逻辑
+ */
 @Entry
 @Component
 struct LoginPage {

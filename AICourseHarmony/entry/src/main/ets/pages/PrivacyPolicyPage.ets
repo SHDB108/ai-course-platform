@@ -1,6 +1,13 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 
+// 隐私政策页面，展示平台隐私政策内容
+
+/**
+ * 隐私政策页面组件
+ * 展示平台隐私政策的详细内容
+ */
 @Entry
 @Component
 struct PrivacyPolicyPage {
@@ -26,20 +33,18 @@ struct PrivacyPolicyPage {
   @Builder
   buildHeader() {
     Row() {
-      Button('←')
+      Button('\u2190')
         .fontSize(20)
         .backgroundColor(Color.Transparent)
         .fontColor('#007AFF')
         .onClick(() => {
           router.back();
         })
-      
-      Text('隐私政策')
+      Text('\u9690\u79c1\u653f\u7b56')
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .flexGrow(1)
         .textAlign(TextAlign.Center)
-      
       Button('')
         .fontSize(16)
         .backgroundColor(Color.Transparent)

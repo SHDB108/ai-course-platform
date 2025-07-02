@@ -1,5 +1,6 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 
 interface SystemLog {
   id: string;
@@ -12,6 +13,12 @@ interface SystemLog {
   userName?: string;
 }
 
+// 系统日志页面，展示平台操作日志与系统事件
+
+/**
+ * 系统日志页面组件
+ * 展示平台操作日志、系统事件等信息
+ */
 @Entry
 @Component
 struct SystemLogPage {
@@ -20,6 +27,7 @@ struct SystemLogPage {
   @State isLoading: boolean = true;
   @State selectedLevel: string = 'all';
   @State selectedModule: string = 'all';
+  @State showBack: boolean = false;
 
   aboutToAppear() {
     if (!this.currentUser) {
@@ -134,21 +142,26 @@ struct SystemLogPage {
   @Builder
   buildHeader() {
     Row() {
-      Button('←')
-        .fontSize(20)
-        .backgroundColor(Color.Transparent)
-        .fontColor('#007AFF')
-        .onClick(() => {
-          router.back();
-        })
-      
-      Text('系统日志')
+      if (this.showBack) {
+        Button('\u2190')
+          .fontSize(20)
+          .backgroundColor(Color.Transparent)
+          .fontColor('#007AFF')
+          .onClick(() => {
+            router.back();
+          })
+      } else {
+        Button('')
+          .fontSize(20)
+          .backgroundColor(Color.Transparent)
+          .fontColor(Color.Transparent)
+      }
+      Text('\u7cfb\u7edf\u65e5\u5fd7')
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .flexGrow(1)
         .textAlign(TextAlign.Center)
-      
-      Button('刷新')
+      Button('\u5237\u65b0')
         .fontSize(16)
         .backgroundColor(Color.Transparent)
         .fontColor('#007AFF')

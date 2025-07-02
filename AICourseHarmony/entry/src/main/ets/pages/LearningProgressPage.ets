@@ -1,8 +1,16 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
 import { getCourseProgress, getLearningProgress, LearningProgress } from '../common/LearningStore';
-import { getEnrolledCourses, Course } from '../common/CourseStore';
+import { getEnrolledCourses } from '../common/CourseStore';
+import { Course } from '../common/CourseTypes';
 
+// 学习进度页面，展示用户各课程的学习进度与统计信息
+
+/**
+ * 学习进度页面组件
+ * 展示当前用户在各课程的学习进度、测验成绩等
+ */
 @Entry
 @Component
 struct LearningProgressPage {
@@ -19,7 +27,7 @@ struct LearningProgressPage {
     this.loadData();
   }
 
-  loadData() {
+  loadData(): void {
     this.isLoading = true;
     
     setTimeout(() => {

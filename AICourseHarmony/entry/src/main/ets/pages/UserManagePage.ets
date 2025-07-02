@@ -1,10 +1,17 @@
 import router from '@ohos.router';
-import { getCurrentUser, users, UserInfo, UserRole } from '../common/UserStore';
+import { getCurrentUser, users } from '../common/UserStore';
+import { UserInfo, UserRole } from '../common/UserTypes';
 
 interface UserIdParams {
   userId: string;
 }
 
+// 用户管理页面，支持用户的筛选、搜索、管理等功能
+
+/**
+ * 用户管理页面组件
+ * 展示所有用户，支持筛选、搜索、管理等操作
+ */
 @Entry
 @Component
 struct UserManagePage {

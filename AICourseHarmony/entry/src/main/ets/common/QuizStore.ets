@@ -1,202 +1,67 @@
-export type QuestionType = 'single_choice' | 'multiple_choice' | 'true_false' | 'fill_blank' | 'short_answer' | 'code';
+import { Quiz, Question, QuizSubmission, QuizAnswer } from './QuizTypes';
 
-export interface Question {
-  id: string;
-  quizId: string;
-  type: QuestionType;
-  content: string;
-  options?: string[]; // 选择题选项
-  correctAnswer: string | string[]; // 正确答案
-  score: number; // 分值
-  explanation?: string; // 解析
-  order: number; // 题目顺序
-}
+/**
+ * 测验全局数据与管理方法
+ */
 
-export interface Quiz {
-  id: string;
-  courseId: string;
-  title: string;
-  description: string;
-  type: 'quiz' | 'assignment';
-  totalScore: number;
-  timeLimit?: number; // 时间限制（分钟）
-  startTime: string;
-  endTime: string;
-  status: 'draft' | 'published' | 'archived';
-  isAutoGrade: boolean; // 是否自动批改
-  createTime: string;
-  updateTime: string;
-}
-
-export interface QuizAnswer {
-  questionId: string;
-  answer: string | string[];
-  score?: number; // 得分
-  feedback?: string; // 教师反馈
-}
-
-export interface QuizSubmission {
-  id: string;
-  quizId: string;
-  studentId: string;
-  answers: QuizAnswer[];
-  totalScore: number;
-  submittedTime: string;
-  gradedTime?: string;
-  status: 'submitted' | 'graded' | 'late';
-}
-
-// 模拟测验数据
-export const quizzes: Quiz[] = [
+/**
+ * 全部测验数据（全局变量，页面间共享）
+ */
+export let quizzes: Quiz[] = [
   {
-    id: '1',
-    courseId: '1',
-    title: '人工智能基础知识测验',
-    description: '测试对人工智能基本概念的理解',
+    id: '201',
+    courseId: '101',
+    title: 'AI导论期中测验',
+    description: '涵盖人工智能基础知识的期中测验。',
     type: 'quiz',
     totalScore: 100,
     timeLimit: 60,
-    startTime: '2024-01-15 09:00:00',
-    endTime: '2024-01-15 10:00:00',
+    startTime: '2024-05-01',
+    endTime: '2024-05-10',
     status: 'published',
     isAutoGrade: true,
-    createTime: '2024-01-10 00:00:00',
-    updateTime: '2024-01-10 00:00:00'
+    createTime: '2024-04-01T00:00:00Z',
+    updateTime: '2024-04-01T00:00:00Z'
   },
   {
-    id: '2',
-    courseId: '1',
-    title: 'AI应用案例分析作业',
-    description: '分析一个实际的人工智能应用案例',
+    id: '202',
+    courseId: '102',
+    title: '机器学习作业1',
+    description: '机器学习基础知识作业。',
     type: 'assignment',
-    totalScore: 50,
-    startTime: '2024-01-20 00:00:00',
-    endTime: '2024-01-27 23:59:59',
+    totalScore: 100,
+    timeLimit: 120,
+    startTime: '2024-05-05',
+    endTime: '2024-05-15',
     status: 'published',
     isAutoGrade: false,
-    createTime: '2024-01-18 00:00:00',
-    updateTime: '2024-01-18 00:00:00'
+    createTime: '2024-04-01T00:00:00Z',
+    updateTime: '2024-04-01T00:00:00Z'
   }
 ];
+export let submissions: QuizSubmission[] = [];
+export let questions: Question[] = [];
 
-// 模拟题目数据
-export const questions: Question[] = [
-  {
-    id: '1',
-    quizId: '1',
-    type: 'single_choice',
-    content: '人工智能的英文缩写是什么？',
-    options: ['AI', 'ML', 'DL', 'NN'],
-    correctAnswer: 'AI',
-    score: 10,
-    explanation: 'AI是Artificial Intelligence的缩写',
-    order: 1
-  },
-  {
-    id: '2',
-    quizId: '1',
-    type: 'multiple_choice',
-    content: '以下哪些是人工智能的主要应用领域？',
-    options: ['自然语言处理', '计算机视觉', '机器学习', '区块链'],
-    correctAnswer: ['自然语言处理', '计算机视觉', '机器学习'],
-    score: 15,
-    explanation: '区块链不属于AI的主要应用领域',
-    order: 2
-  },
-  {
-    id: '3',
-    quizId: '1',
-    type: 'true_false',
-    content: '图灵测试是用来判断机器是否具有智能的标准',
-    correctAnswer: 'true',
-    score: 10,
-    explanation: '图灵测试是艾伦·图灵提出的判断机器智能的标准',
-    order: 3
-  },
-  {
-    id: '4',
-    quizId: '1',
-    type: 'fill_blank',
-    content: '机器学习是人工智能的一个_____',
-    correctAnswer: '分支',
-    score: 10,
-    explanation: '机器学习是AI的一个重要分支',
-    order: 4
-  },
-  {
-    id: '5',
-    quizId: '2',
-    type: 'short_answer',
-    content: '请分析ChatGPT在自然语言处理方面的优势和局限性',
-    correctAnswer: '', // 主观题没有标准答案
-    score: 50,
-    order: 1
-  }
-];
-
-// 模拟提交数据
-export const submissions: QuizSubmission[] = [
-  {
-    id: '1',
-    quizId: '1',
-    studentId: '3',
-    answers: [
-      {
-        questionId: '1',
-        answer: 'AI',
-        score: 10
-      } as QuizAnswer,
-      {
-        questionId: '2',
-        answer: ['自然语言处理', '计算机视觉', '机器学习'],
-        score: 15
-      } as QuizAnswer,
-      {
-        questionId: '3',
-        answer: 'true',
-        score: 10
-      } as QuizAnswer,
-      {
-        questionId: '4',
-        answer: '分支',
-        score: 10
-      } as QuizAnswer
-    ],
-    totalScore: 45,
-    submittedTime: '2024-01-15 09:45:00',
-    gradedTime: '2024-01-15 10:05:00',
-    status: 'graded'
-  } as QuizSubmission,
-  {
-    id: '2',
-    quizId: '2',
-    studentId: '3',
-    answers: [
-      {
-        questionId: '5',
-        answer: 'ChatGPT的优势包括：1. 强大的语言理解能力 2. 丰富的知识储备 3. 流畅的对话体验。局限性包括：1. 可能存在偏见 2. 知识更新滞后 3. 缺乏真实理解',
-        score: 42,
-        feedback: '分析比较全面，但可以更深入地讨论技术原理'
-      } as QuizAnswer
-    ],
-    totalScore: 42,
-    submittedTime: '2024-01-25 15:30:00',
-    gradedTime: '2024-01-26 10:00:00',
-    status: 'graded'
-  } as QuizSubmission
-];
-
-// 测验管理函数
-export function getQuizzesByCourse(courseId: string): Quiz[] {
-  return quizzes.filter(q => q.courseId === courseId && q.status === 'published');
+/**
+ * 获取所有测验
+ */
+export function getAllQuizzes(): Quiz[] {
+  return quizzes;
 }
 
-export function getQuizById(quizId: string): Quiz | undefined {
-  return quizzes.find(q => q.id === quizId);
+/**
+ * 根据ID获取测验详情
+ */
+export function getQuizById(id: string): Quiz | undefined {
+  return quizzes.find((quiz: Quiz) => quiz.id === id);
+}
+
+export function getQuizzesByCourse(courseId: string): Quiz[] {
+  return quizzes.filter((q: Quiz) => q.courseId === courseId && q.status === 'published');
 }
 
 export function getQuizQuestions(quizId: string): Question[] {
-  return questions.filter(q => q.quizId === quizId).sort((a, b) => a.order - b.order);
+  return questions.filter((q: Question) => q.quizId === quizId).sort((a: Question, b: Question) => a.order - b.order);
 }
 
 export function getStudentSubmissions(studentId: string): QuizSubmission[] {
@@ -336,11 +201,11 @@ export function getQuizStatistics(quizId: string): QuizStatistics {
 }
 
 /**
- * 新建测验，返回新测验id
+ * 新建测验，返回新测验ID
  */
 export function createQuiz(quiz: Quiz): string {
-  const id = (Date.now() + Math.floor(Math.random() * 1000)).toString();
-  const now = new Date().toISOString();
+  const id: string = (Date.now() + Math.floor(Math.random() * 1000)).toString();
+  const now: string = new Date().toISOString();
   const newQuiz: Quiz = {
     id: id,
     courseId: quiz.courseId,
@@ -351,7 +216,7 @@ export function createQuiz(quiz: Quiz): string {
     timeLimit: quiz.timeLimit,
     startTime: quiz.startTime,
     endTime: quiz.endTime,
-    status: 'draft',
+    status: quiz.status,
     isAutoGrade: quiz.isAutoGrade,
     createTime: now,
     updateTime: now
@@ -361,7 +226,7 @@ export function createQuiz(quiz: Quiz): string {
 }
 
 /**
- * 更新测验，返回是否成功
+ * 更新测验信息
  */
 export function updateQuiz(quizId: string, update: Quiz): boolean {
   const idx = quizzes.findIndex(q => q.id === quizId);
@@ -382,5 +247,15 @@ export function updateQuiz(quizId: string, update: Quiz): boolean {
     createTime: old.createTime,
     updateTime: new Date().toISOString()
   };
+  return true;
+}
+
+/**
+ * 删除测验
+ */
+export function deleteQuiz(quizId: string): boolean {
+  const idx = quizzes.findIndex(q => q.id === quizId);
+  if (idx === -1) return false;
+  quizzes.splice(idx, 1);
   return true;
 } 

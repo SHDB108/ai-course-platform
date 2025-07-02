@@ -1,8 +1,11 @@
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo, UserRole } from '../common/UserStore';
-import { getEnrolledCourses, getAllCourses, getCoursesByTeacher, Course } from '../common/CourseStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo, UserRole } from '../common/UserTypes';
+import { getEnrolledCourses, getAllCourses, getCoursesByTeacher } from '../common/CourseStore';
+import { Course } from '../common/CourseTypes';
+import { getStudentSubmissions, getAllQuizzes } from '../common/QuizStore';
+import { Quiz, QuizSubmission } from '../common/QuizTypes';
 import { getActiveRecommendations, LearningRecommendation } from '../common/LearningStore';
-import { getStudentSubmissions, QuizSubmission } from '../common/QuizStore';
 
 interface QuickAction {
   icon: string;
@@ -17,6 +20,13 @@ interface NavItem {
   index: number;
 }
 
+// 主页面，AI课程平台的核心导航与功能入口
+// 包含课程、测验、学习进度、用户管理等主要模块的导航与展示
+
+/**
+ * 主页面组件
+ * 提供平台主要功能的导航入口和概览
+ */
 @Entry
 @Component
 struct MainPage {
@@ -33,6 +43,7 @@ struct MainPage {
     { icon: '👤', label: '我的', index: 3 }
   ];
   @State actions: QuickAction[] = [];
+  @State quizzes: Quiz[] = [];
 
   aboutToAppear() {
     if (this.currentUser) {
@@ -62,7 +73,12 @@ struct MainPage {
       this.loadUserData();
       this.loadRecommendations();
       this.loadRecentSubmissions();
+      this.loadQuizzes();
     }
+  }
+
+  onShow() {
+    this.loadUserData();
   }
 
   loadUserData() {
@@ -81,6 +97,10 @@ struct MainPage {
     } else if (this.currentUser.role === 'admin') {
       this.courses = getAllCourses();
     }
+  }
+
+  loadQuizzes() {
+    this.quizzes = getAllQuizzes();
   }
 
   build() {
@@ -589,18 +609,17 @@ struct MainPage {
 
   @Builder
   buildQuizList(type: string) {
-    // 这里只做简单演示，实际可根据type筛选不同测验
     Column() {
       Text(type === 'all' ? '全部测验列表' : type === 'teacher' ? '课程测验列表' : '可参加的测验列表')
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
         .margin({ bottom: 10 })
-      ForEach(this.submissions, (quiz: QuizSubmission) => {
+      ForEach(this.quizzes, (quiz: Quiz) => {
         Row() {
-          Text('测验')
+          Text(quiz.title)
             .fontSize(14)
             .margin({ right: 10 })
-          Text(`得分：${quiz.totalScore}`)
+          Text(quiz.type === 'quiz' ? '测验' : '作业')
             .fontSize(12)
             .fontColor('#666')
         }

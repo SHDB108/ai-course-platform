@@ -1,14 +1,29 @@
+// 课程列表页面，支持课程的筛选、搜索、管理等功能
 import router from '@ohos.router';
-import { getCurrentUser, UserInfo } from '../common/UserStore';
-import { getEnrolledCourses, getAllCourses, getCoursesByTeacher, Course, enrollCourse } from '../common/CourseStore';
+import { getCurrentUser } from '../common/UserStore';
+import { UserInfo } from '../common/UserTypes';
+import { getEnrolledCourses, getAllCourses, getCoursesByTeacher, enrollCourse } from '../common/CourseStore';
+import { Course } from '../common/CourseTypes';
 
+/**
+ * 课程列表页面组件
+ * 展示所有课程，支持筛选、搜索、管理等操作
+ */
 @Entry
 @Component
 struct CourseListPage {
+  /** 当前登录用户信息 */
   @State currentUser: UserInfo | null = getCurrentUser();
+  /** 全部课程数据（用于筛选） */
+  @State allCourses: Course[] = [];
+  /** 当前筛选/搜索后的课程数据 */
   @State courses: Course[] = [];
+  /** 搜索关键词 */
   @State searchText: string = '';
+  /** 当前选中的学院和类别 */
+  @State selectedDepartment: string = 'all';
   @State selectedCategory: string = 'all';
+  /** 加载状态 */
   @State isLoading: boolean = false;
 
   aboutToAppear() {
@@ -19,24 +34,29 @@ struct CourseListPage {
     this.loadCourses();
   }
 
+  /**
+   * 页面每次显示时自动刷新课程数据
+   */
+  onShow() {
+    this.loadCourses();
+  }
+
+  /**
+   * 加载全部课程数据，并根据筛选条件刷新显示
+   */
   loadCourses() {
     this.isLoading = true;
-    
-    // 模拟网络延迟
     setTimeout(() => {
-      if (this.currentUser) {
-        if (this.currentUser.role === 'student') {
-          this.courses = getEnrolledCourses(this.currentUser.id);
-        } else if (this.currentUser.role === 'teacher') {
-          this.courses = getCoursesByTeacher(this.currentUser.id);
-        } else if (this.currentUser.role === 'admin') {
-          this.courses = getAllCourses();
-        }
-      }
+      // 统一从全局CourseStore获取所有课程
+      this.allCourses = getAllCourses();
+      this.filterCourses();
       this.isLoading = false;
     }, 500);
   }
 
+  /**
+   * 页面主结构
+   */
   build() {
     Column() {
       // 顶部导航栏
@@ -66,8 +86,8 @@ struct CourseListPage {
       .backgroundColor(Color.White)
       .border({ width: { bottom: 1 }, color: '#e0e0e0' })
 
-      // 搜索和筛选
-      this.buildSearchAndFilter()
+      // 搜索和双重筛选
+      this.buildSearchAndDoubleFilter()
       
       // 课程列表可滚动
       Scroll() {
@@ -81,8 +101,11 @@ struct CourseListPage {
     .backgroundColor('#f5f5f5')
   }
 
+  /**
+   * 搜索与双重筛选区域
+   */
   @Builder
-  buildSearchAndFilter() {
+  buildSearchAndDoubleFilter() {
     Column() {
       // 搜索框
       Row() {
@@ -112,29 +135,62 @@ struct CourseListPage {
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
-      .margin({ bottom: 15 })
+      .margin({ bottom: 10 })
 
-      // 分类筛选
+      // 学院筛选Tab
       Scroll() {
         Row() {
-          this.buildFilterChip('全部', 'all')
-          this.buildFilterChip('人工智能', 'ai')
-          this.buildFilterChip('机器学习', 'ml')
-          this.buildFilterChip('深度学习', 'dl')
-          this.buildFilterChip('计算机视觉', 'cv')
-          this.buildFilterChip('自然语言处理', 'nlp')
+          this.buildDepartmentChip('全部学院', 'all')
+          ForEach(this.getAllDepartments(), (dep: string) => this.buildDepartmentChip(dep, dep))
         }
         .padding({ left: 20, right: 20 })
       }
       .scrollable(ScrollDirection.Horizontal)
-      .margin({ bottom: 15 })
+      .margin({ bottom: 10 })
+
+      // 类别筛选Tab
+      Scroll() {
+        Row() {
+          this.buildCategoryChip('全部类别', 'all')
+          ForEach(this.getAllCategories(), (cat: string) => this.buildCategoryChip(cat, cat))
+        }
+        .padding({ left: 20, right: 20 })
+      }
+      .scrollable(ScrollDirection.Horizontal)
+      .margin({ bottom: 10 })
     }
     .padding({ left: 20, right: 20, top: 15 })
     .backgroundColor(Color.White)
   }
 
+  /**
+   * 获取所有学院和类别（用于筛选Tab）
+   */
+  getAllDepartments(): string[] {
+    const deps = this.allCourses.map(c => c.department).filter(dep => !!dep);
+    return Array.from(new Set(deps));
+  }
+  getAllCategories(): string[] {
+    const cats = this.allCourses.map(c => c.category).filter(cat => !!cat);
+    return Array.from(new Set(cats));
+  }
+
   @Builder
-  buildFilterChip(label: string, value: string) {
+  buildDepartmentChip(label: string, value: string) {
+    Button(label)
+      .fontSize(14)
+      .height(32)
+      .backgroundColor(this.selectedDepartment === value ? '#007AFF' : '#f0f0f0')
+      .fontColor(this.selectedDepartment === value ? Color.White : '#333')
+      .borderRadius(16)
+      .margin({ right: 10 })
+      .onClick(() => {
+        this.selectedDepartment = value;
+        this.filterCourses();
+      })
+  }
+  @Builder
+  buildCategoryChip(label: string, value: string) {
     Button(label)
       .fontSize(14)
       .height(32)
@@ -148,6 +204,9 @@ struct CourseListPage {
       })
   }
 
+  /**
+   * 课程列表渲染
+   */
   @Builder
   buildCourseList() {
     if (this.isLoading) {
@@ -195,6 +254,9 @@ struct CourseListPage {
     }
   }
 
+  /**
+   * 单个课程卡片渲染
+   */
   @Builder
   buildCourseItem(course: Course) {
     Column() {
@@ -296,17 +358,21 @@ struct CourseListPage {
     })
   }
 
-  filterCourses() {
+  /**
+   * 筛选课程
+   */
+  filterCourses(): void {
     this.isLoading = true;
-    
     setTimeout(() => {
-      let filteredCourses = this.courses;
-      
-      // 按分类筛选
+      let filteredCourses = this.allCourses;
+      // 按学院筛选
+      if (this.selectedDepartment !== 'all') {
+        filteredCourses = filteredCourses.filter(course => course.department === this.selectedDepartment);
+      }
+      // 按类别筛选
       if (this.selectedCategory !== 'all') {
         filteredCourses = filteredCourses.filter(course => course.category === this.selectedCategory);
       }
-      
       // 按搜索文本筛选
       if (this.searchText.trim()) {
         const searchLower = this.searchText.toLowerCase();
@@ -316,7 +382,10 @@ struct CourseListPage {
           course.teacherName.toLowerCase().includes(searchLower)
         );
       }
-      
+      // 保证全部条件下，字段为空的课程也能显示
+      if (this.selectedDepartment === 'all' && this.selectedCategory === 'all' && !this.searchText.trim()) {
+        filteredCourses = this.allCourses;
+      }
       this.courses = filteredCourses;
       this.isLoading = false;
     }, 300);
@@ -352,7 +421,10 @@ struct CourseListPage {
     }
   }
 
+  /**
+   * 跳转到课程编辑页面
+   */
   manageCourse(course: Course) {
-    // TODO: 跳转到课程管理页面
+    router.pushUrl({ url: 'pages/EditCoursePage', params: { courseId: course.id } });
   }
 } 

@@ -1,5 +1,11 @@
 import router from '@ohos.router';
 
+// 应用入口页面，负责路由分发和初始跳转
+
+/**
+ * 应用入口页面组件
+ * 负责应用启动时的路由分发和初始页面跳转
+ */
 @Entry
 @Component
 struct Index {

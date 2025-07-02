@@ -1,138 +1,99 @@
-export interface Course {
-  id: string;
-  courseCode: string;
-  name: string;
-  title: string; // 添加title字段，与CourseListPage中使用的一致
-  description: string;
-  credits: number;
-  hours: number;
-  teacherId: string;
-  teacherName: string;
-  semester: string;
-  department: string;
-  classroom: string;
-  schedule: string; // 上课时间
-  capacity: number;
-  enrolledCount: number;
-  studentCount: number; // 添加studentCount字段
-  category: string; // 添加category字段
-  coverImage?: string; // 添加coverImage字段
-  isEnrolled?: boolean; // 添加isEnrolled字段
-  status: 'active' | 'inactive';
-  createTime: string;
-  updateTime: string;
-}
+import { Course, CourseEnrollment } from './CourseTypes';
 
-export interface CourseEnrollment {
-  id: string;
-  studentId: string;
-  courseId: string;
-  enrollTime: string;
-  status: 'enrolled' | 'dropped';
-}
-
-// 模拟课程数据
-export const courses: Course[] = [
+/**
+ * 全部课程数据（全局变量，页面间共享）
+ */
+export let courses: Course[] = [
   {
-    id: '1',
-    courseCode: 'CS101',
+    id: '101',
+    courseCode: 'AI101',
     name: '人工智能导论',
     title: '人工智能导论',
-    description: '本课程介绍人工智能的基本概念、发展历程和主要应用领域',
+    description: '介绍人工智能的基本概念、发展历程与应用。',
     credits: 3,
     hours: 48,
     teacherId: '2',
-    teacherName: '张教授',
+    teacherName: '张老师',
     semester: '2024春季',
-    department: '计算机学院',
+    department: '人工智能学院',
     classroom: 'A101',
     schedule: '周一 1-2节',
-    capacity: 50,
-    enrolledCount: 35,
-    studentCount: 35,
-    category: '人工智能',
+    capacity: 100,
+    enrolledCount: 0,
+    studentCount: 0,
+    category: '基础',
+    coverImage: '',
+    isEnrolled: false,
     status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
+    createTime: '2024-01-01T00:00:00Z',
+    updateTime: '2024-01-01T00:00:00Z'
   },
   {
-    id: '2',
-    courseCode: 'CS102',
+    id: '102',
+    courseCode: 'ML201',
     name: '机器学习基础',
     title: '机器学习基础',
-    description: '学习机器学习的基本算法和原理',
+    description: '系统讲解机器学习的基本原理与常用算法。',
     credits: 4,
     hours: 64,
     teacherId: '2',
-    teacherName: '张教授',
+    teacherName: '张老师',
     semester: '2024春季',
-    department: '计算机学院',
+    department: '人工智能学院',
     classroom: 'A102',
-    schedule: '周二 3-4节',
-    capacity: 40,
-    enrolledCount: 28,
-    studentCount: 28,
-    category: '机器学习',
+    schedule: '周三 3-4节',
+    capacity: 80,
+    enrolledCount: 0,
+    studentCount: 0,
+    category: '核心',
+    coverImage: '',
+    isEnrolled: false,
     status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
+    createTime: '2024-01-01T00:00:00Z',
+    updateTime: '2024-01-01T00:00:00Z'
   }
 ];
+/**
+ * 选课记录
+ */
+export let enrollments: CourseEnrollment[] = [];
 
-// 模拟选课数据
-export const enrollments: CourseEnrollment[] = [
-  {
-    id: '1',
-    studentId: '3',
-    courseId: '1',
-    enrollTime: '2024-01-15 10:00:00',
-    status: 'enrolled'
-  },
-  {
-    id: '2',
-    studentId: '3',
-    courseId: '2',
-    enrollTime: '2024-01-16 14:00:00',
-    status: 'enrolled'
-  }
-];
-
-// 课程管理相关函数
+/**
+ * 获取所有"激活"状态的课程
+ */
 export function getAllCourses(): Course[] {
-  return courses.filter(course => course.status === 'active');
+  return courses.filter((course: Course) => course.status === 'active');
 }
 
+/**
+ * 根据ID获取课程详情
+ */
 export function getCourseById(id: string): Course | undefined {
-  return courses.find(course => course.id === id);
+  return courses.find((course: Course) => course.id === id);
 }
 
 export function getCoursesByTeacher(teacherId: string): Course[] {
-  return courses.filter(course => course.teacherId === teacherId && course.status === 'active');
+  return courses.filter((course: Course) => course.teacherId === teacherId && course.status === 'active');
 }
 
 export function getEnrolledCourses(studentId: string): Course[] {
-  const enrolledCourseIds = enrollments
-    .filter(enrollment => enrollment.studentId === studentId && enrollment.status === 'enrolled')
-    .map(enrollment => enrollment.courseId);
-  
-  return courses.filter(course => enrolledCourseIds.includes(course.id));
+  const enrolledCourseIds: string[] = enrollments
+    .filter((enrollment: CourseEnrollment) => enrollment.studentId === studentId && enrollment.status === 'enrolled')
+    .map((enrollment: CourseEnrollment) => enrollment.courseId);
+  return courses.filter((course: Course) => enrolledCourseIds.includes(course.id));
 }
 
 export function enrollCourse(studentId: string, courseId: string): boolean {
-  const course = getCourseById(courseId);
+  const course: Course | undefined = getCourseById(courseId);
   if (!course || course.enrolledCount >= course.capacity) {
     return false;
   }
-
-  const existingEnrollment = enrollments.find(
-    e => e.studentId === studentId && e.courseId === courseId && e.status === 'enrolled'
+  const existingEnrollment: CourseEnrollment | undefined = enrollments.find(
+    (e: CourseEnrollment) => e.studentId === studentId && e.courseId === courseId && e.status === 'enrolled'
   );
-  
   if (existingEnrollment) {
-    return false; // 已经选过这门课
+    return false;
   }
-
-  // 添加选课记录
   enrollments.push({
     id: Date.now().toString(),
     studentId,
@@ -140,55 +101,45 @@ export function enrollCourse(studentId: string, courseId: string): boolean {
     enrollTime: new Date().toISOString(),
     status: 'enrolled'
   });
-
-  // 更新课程选课人数
-  const courseIndex = courses.findIndex(c => c.id === courseId);
+  const courseIndex: number = courses.findIndex((c: Course) => c.id === courseId);
   if (courseIndex !== -1) {
     courses[courseIndex].enrolledCount++;
   }
-
   return true;
 }
 
 export function dropCourse(studentId: string, courseId: string): boolean {
-  const enrollmentIndex = enrollments.findIndex(
-    e => e.studentId === studentId && e.courseId === courseId && e.status === 'enrolled'
+  const enrollmentIndex: number = enrollments.findIndex(
+    (e: CourseEnrollment) => e.studentId === studentId && e.courseId === courseId && e.status === 'enrolled'
   );
-
   if (enrollmentIndex === -1) {
     return false;
   }
-
-  // 更新选课状态
   enrollments[enrollmentIndex].status = 'dropped';
-
-  // 更新课程选课人数
-  const courseIndex = courses.findIndex(c => c.id === courseId);
+  const courseIndex: number = courses.findIndex((c: Course) => c.id === courseId);
   if (courseIndex !== -1) {
     courses[courseIndex].enrolledCount--;
   }
-
   return true;
 }
 
 export function searchCourses(keyword: string, teacherId?: string, semester?: string): Course[] {
-  return courses.filter(course => {
-    const matchesKeyword = course.name.includes(keyword) || 
+  return courses.filter((course: Course) => {
+    const matchesKeyword: boolean = course.name.includes(keyword) || 
                           course.description.includes(keyword) ||
                           course.courseCode.includes(keyword);
-    const matchesTeacher = !teacherId || course.teacherId === teacherId;
-    const matchesSemester = !semester || course.semester === semester;
-    
+    const matchesTeacher: boolean = !teacherId || course.teacherId === teacherId;
+    const matchesSemester: boolean = !semester || course.semester === semester;
     return matchesKeyword && matchesTeacher && matchesSemester && course.status === 'active';
   });
 }
 
 /**
- * 新建课程，返回新课程id
+ * 新建课程，返回新课程ID
  */
 export function createCourse(course: Course): string {
-  const id = (Date.now() + Math.floor(Math.random() * 1000)).toString();
-  const now = new Date().toISOString();
+  const id: string = (Date.now() + Math.floor(Math.random() * 1000)).toString();
+  const now: string = new Date().toISOString();
   const newCourse: Course = {
     id: id,
     courseCode: course.courseCode,
@@ -207,18 +158,18 @@ export function createCourse(course: Course): string {
     enrolledCount: 0,
     studentCount: 0,
     category: course.category,
+    coverImage: course.coverImage,
+    isEnrolled: false,
     status: 'active',
     createTime: now,
-    updateTime: now,
-    coverImage: course.coverImage,
-    isEnrolled: course.isEnrolled
+    updateTime: now
   };
   courses.push(newCourse);
   return id;
 }
 
 /**
- * 更新课程，返回是否成功
+ * 更新课程信息
  */
 export function updateCourse(courseId: string, update: Course): boolean {
   const idx = courses.findIndex(c => c.id === courseId);
@@ -248,5 +199,15 @@ export function updateCourse(courseId: string, update: Course): boolean {
     coverImage: update.coverImage,
     isEnrolled: update.isEnrolled
   };
+  return true;
+}
+
+/**
+ * 删除课程
+ */
+export function deleteCourse(courseId: string): boolean {
+  const idx = courses.findIndex(c => c.id === courseId);
+  if (idx === -1) return false;
+  courses.splice(idx, 1);
   return true;
 } 
