@@ -12,9 +12,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @TableName("t_user")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User implements UserDetails {
     @TableId
     private Long id;
@@ -34,6 +37,7 @@ public class User implements UserDetails {
     private LocalDateTime lastLoginTime;
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role));
     }

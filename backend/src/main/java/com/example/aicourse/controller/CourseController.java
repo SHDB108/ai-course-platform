@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/courses") // 统一路径前缀
+@RequestMapping("api/v1/courses") // 统一路径前缀
 public class CourseController {
 
     private final CourseService courseService;
