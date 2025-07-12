@@ -6,6 +6,7 @@ import com.example.aicourse.entity.Student;
 import com.example.aicourse.vo.PageVO; // 导入 PageVO
 import com.example.aicourse.vo.student.ImportResultVO; // 导入 ImportResultVO
 import com.example.aicourse.vo.student.StudentVO; // 导入 StudentVO
+import com.example.aicourse.vo.student.StudentDashboardStatsVO; // 导入 StudentDashboardStatsVO
 import org.springframework.core.io.Resource; // 导入 Resource
 import org.springframework.http.ResponseEntity; // 导入 ResponseEntity
 import org.springframework.web.multipart.MultipartFile; // 导入 MultipartFile
@@ -79,4 +80,32 @@ public interface StudentService extends IService<Student>{
      * @throws IOException 文件处理异常
      */
     ResponseEntity<Resource> exportStudents(String major, String grade, String format) throws IOException;
+
+    /**
+     * API 3.8 获取学生选修的课程列表
+     * @param studentId 学生ID
+     * @param pageNum 当前页码
+     * @param pageSize 每页数量
+     * @param keyword 搜索关键词
+     * @return 学生课程列表
+     */
+    PageVO<com.example.aicourse.vo.course.CourseVO> getStudentCourses(Long studentId, Long pageNum, Long pageSize, String keyword);
+    
+    /**
+     * API 3.9 获取学生的任务列表
+     * @param studentId 学生ID
+     * @param pageNum 当前页码
+     * @param pageSize 每页数量
+     * @param keyword 搜索关键词
+     * @param status 任务状态筛选
+     * @return 学生任务列表
+     */
+    PageVO<com.example.aicourse.vo.task.StudentTaskVO> getStudentTasks(Long studentId, Long pageNum, Long pageSize, String keyword, String status);
+
+    /**
+     * API 3.10 获取学生仪表板统计数据
+     * @param studentId 学生ID
+     * @return 学生仪表板统计数据
+     */
+    StudentDashboardStatsVO getStudentDashboardStats(Long studentId);
 }

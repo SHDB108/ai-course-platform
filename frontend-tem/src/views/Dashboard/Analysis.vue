@@ -2,9 +2,11 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useUserStore } from '@/store/modules/user'
-import { computed, ref } from 'vue'
-import { ElRow, ElCol, ElCard, ElSkeleton } from 'element-plus'
+import { computed, ref, onMounted } from 'vue'
+import { ElRow, ElCol, ElCard, ElSkeleton, ElMessage } from 'element-plus'
 import { Icon } from '@/components/Icon'
+import { getStudentDashboardStatsApi, type StudentDashboardStats } from '@/api/student'
+import { safeUserIdToString, autoCorrectUserId } from '@/utils/userIdUtils'
 
 defineOptions({
   name: 'Analysis'
@@ -14,26 +16,78 @@ const { t } = useI18n()
 const userStore = useUserStore()
 
 const loading = ref(true)
+const dashboardStats = ref<StudentDashboardStats>({
+  myCourses: 0,
+  pendingTasks: 0,
+  weeklySubmissions: 0,
+  unreadMessages: 0,
+  todoItems: { pending: 0, total: 0 },
+  projects: 0
+})
 
 const username = computed(() => userStore.getUserInfo?.username || '用户')
 
-const statCards = ref([
-  { title: '我的课程', value: 12, unit: '门', icon: 'ant-design:read-filled', color: '#409eff' },
-  { title: '待办任务', value: 3, unit: '个', icon: 'ant-design:bell-filled', color: '#67c23a' },
+const statCards = computed(() => [
+  {
+    title: '我的课程',
+    value: dashboardStats.value.myCourses,
+    unit: '门',
+    icon: 'ant-design:read-filled',
+    color: '#409eff'
+  },
+  {
+    title: '待办任务',
+    value: dashboardStats.value.pendingTasks,
+    unit: '个',
+    icon: 'ant-design:bell-filled',
+    color: '#67c23a'
+  },
   {
     title: '本周提交',
-    value: 27,
+    value: dashboardStats.value.weeklySubmissions,
     unit: '次',
     icon: 'ant-design:check-square-filled',
     color: '#e6a23c'
   },
-  { title: '未读消息', value: 8, unit: '条', icon: 'ant-design:message-filled', color: '#f56c6c' }
+  {
+    title: '未读消息',
+    value: dashboardStats.value.unreadMessages,
+    unit: '条',
+    icon: 'ant-design:message-filled',
+    color: '#f56c6c'
+  }
 ])
 
-// 模拟数据加载效果
-setTimeout(() => {
-  loading.value = false
-}, 800)
+const fetchDashboardStats = async () => {
+  loading.value = true
+  try {
+    // 获取并修正用户ID
+    const userInfo = userStore.getUserInfo
+    const rawStudentId = userInfo?.userId
+    const correctedIdStr = autoCorrectUserId(rawStudentId || '')
+
+    if (!correctedIdStr || correctedIdStr === '0') {
+      ElMessage.error('未获取到有效的学生信息，请重新登录')
+      return
+    }
+
+    const res = await getStudentDashboardStatsApi(correctedIdStr)
+    if (res.code === 0 && res.data) {
+      dashboardStats.value = res.data
+    } else {
+      ElMessage.warning('获取仪表板数据失败，显示默认数据')
+    }
+  } catch (error) {
+    console.error('获取仪表板统计数据失败:', error)
+    ElMessage.warning('获取仪表板数据失败，显示默认数据')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchDashboardStats()
+})
 </script>
 
 <template>
@@ -47,11 +101,13 @@ setTimeout(() => {
         <div class="flex items-center">
           <div class="text-right mr-20px">
             <p class="text-14px text-gray-500">待办事项</p>
-            <p class="text-24px font-bold">3 / 10</p>
+            <p class="text-24px font-bold"
+              >{{ dashboardStats.todoItems.pending }} / {{ dashboardStats.todoItems.total }}</p
+            >
           </div>
           <div class="text-right">
             <p class="text-14px text-gray-500">项目</p>
-            <p class="text-24px font-bold">8</p>
+            <p class="text-24px font-bold">{{ dashboardStats.projects }}</p>
           </div>
         </div>
       </div>

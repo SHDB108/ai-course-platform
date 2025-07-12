@@ -9,12 +9,21 @@ import com.example.aicourse.dto.student.StudentCreateDTO;
 import com.example.aicourse.dto.student.StudentUpdateDTO;
 import com.example.aicourse.entity.Student;
 import com.example.aicourse.entity.User;
+import com.example.aicourse.entity.Course;
+import com.example.aicourse.entity.CourseStudent;
+import com.example.aicourse.entity.Teacher;
 import com.example.aicourse.repository.UserMapper;
 import com.example.aicourse.repository.StudentMapper;
+import com.example.aicourse.repository.CourseMapper;
+import com.example.aicourse.repository.CourseStudentMapper;
+import com.example.aicourse.repository.TeacherMapper;
 import com.example.aicourse.service.StudentService;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.student.ImportResultVO;
 import com.example.aicourse.vo.student.StudentVO;
+import com.example.aicourse.vo.student.StudentDashboardStatsVO;
+import com.example.aicourse.vo.course.CourseVO;
+import com.example.aicourse.vo.task.StudentTaskVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -40,11 +49,19 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
 
     private final StudentMapper studentMapper;
     private final UserMapper userMapper;
+    private final CourseMapper courseMapper;
+    private final CourseStudentMapper courseStudentMapper;
+    private final TeacherMapper teacherMapper;
 
     @Autowired
-    public StudentServiceImpl(StudentMapper studentMapper, UserMapper userMapper) {
+    public StudentServiceImpl(StudentMapper studentMapper, UserMapper userMapper, 
+                             CourseMapper courseMapper, CourseStudentMapper courseStudentMapper, 
+                             TeacherMapper teacherMapper) {
         this.studentMapper = studentMapper;
         this.userMapper = userMapper;
+        this.courseMapper = courseMapper;
+        this.courseStudentMapper = courseStudentMapper;
+        this.teacherMapper = teacherMapper;
     }
 
     /**
@@ -329,5 +346,173 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
                 .contentType(contentType)
                 .contentLength(resource.contentLength())
                 .body(resource);
+    }
+
+    /**
+     * API 3.8 获取学生选修的课程列表
+     */
+    @Override
+    public PageVO<CourseVO> getStudentCourses(Long studentId, Long pageNum, Long pageSize, String keyword) {
+        // 1. 检查学生是否存在
+        Student student = studentMapper.selectById(studentId);
+        if (student == null) {
+            throw new RuntimeException("学生不存在");
+        }
+
+        // 2. 查询学生选修的课程ID列表
+        LambdaQueryWrapper<CourseStudent> enrollmentQueryWrapper = Wrappers.<CourseStudent>lambdaQuery()
+                .eq(CourseStudent::getStudentId, studentId);
+        List<CourseStudent> enrollments = courseStudentMapper.selectList(enrollmentQueryWrapper);
+        
+        if (enrollments.isEmpty()) {
+            // 如果学生没有选修任何课程，返回空结果
+            PageVO<CourseVO> pageVO = new PageVO<>();
+            pageVO.setRecords(new ArrayList<>());
+            pageVO.setTotal(0L);
+            pageVO.setSize(pageSize);
+            pageVO.setCurrent(pageNum);
+            pageVO.setPages(0L);
+            return pageVO;
+        }
+
+        List<Long> courseIds = enrollments.stream()
+                .map(CourseStudent::getCourseId)
+                .collect(Collectors.toList());
+
+        // 3. 构建课程查询条件（不分页，先获取所有数据）
+        LambdaQueryWrapper<Course> courseQueryWrapper = Wrappers.<Course>lambdaQuery()
+                .in(Course::getId, courseIds);
+        
+        // 如果有关键词搜索，添加搜索条件
+        if (StringUtils.isNotBlank(keyword)) {
+            courseQueryWrapper.and(wrapper -> wrapper
+                    .like(Course::getCourseName, keyword)
+                    .or()
+                    .like(Course::getCourseCode, keyword));
+        }
+
+        // 先获取所有符合条件的课程
+        List<Course> allCourses = courseMapper.selectList(courseQueryWrapper);
+        
+        // 4. 手动分页
+        int total = allCourses.size();
+        int startIndex = (int) ((pageNum - 1) * pageSize);
+        int endIndex = Math.min(startIndex + pageSize.intValue(), total);
+        
+        List<Course> pagedCourses = new ArrayList<>();
+        if (startIndex < total) {
+            pagedCourses = allCourses.subList(startIndex, endIndex);
+        }
+
+        // 5. 转换为CourseVO
+        List<CourseVO> courseVOs = pagedCourses.stream().map(course -> {
+            CourseVO courseVO = new CourseVO();
+            BeanUtils.copyProperties(course, courseVO);
+
+            // 映射前端期望的字段
+            courseVO.setName(course.getCourseName());
+            courseVO.setDuration(course.getHours());
+            courseVO.setMaxStudents(course.getCapacity());
+            courseVO.setStatus("ACTIVE"); // 默认状态
+
+            // 格式化时间字段
+            if (course.getGmtCreate() != null) {
+                courseVO.setCreatedAt(course.getGmtCreate().toString());
+            }
+            if (course.getGmtModified() != null) {
+                courseVO.setUpdatedAt(course.getGmtModified().toString());
+            }
+
+            // 填充教师姓名
+            if (course.getTeacherId() != null) {
+                Teacher teacher = teacherMapper.selectById(course.getTeacherId());
+                if (teacher != null) {
+                    courseVO.setTeacherName(teacher.getName());
+                }
+            }
+
+            return courseVO;
+        }).collect(Collectors.toList());
+
+        // 6. 构建分页结果
+        PageVO<CourseVO> pageVO = new PageVO<>();
+        pageVO.setRecords(courseVOs);
+        pageVO.setTotal((long) total);
+        pageVO.setSize(pageSize);
+        pageVO.setCurrent(pageNum);
+        pageVO.setPages((long) Math.ceil((double) total / pageSize));
+
+        return pageVO;
+    }
+
+    /**
+     * API 3.9 获取学生的任务列表
+     * TODO: 这是一个基础实现，需要后续完善复杂的查询逻辑
+     */
+    @Override
+    public PageVO<StudentTaskVO> getStudentTasks(Long studentId, Long pageNum, Long pageSize, String keyword, String status) {
+        // 1. 检查学生是否存在
+        Student student = studentMapper.selectById(studentId);
+        if (student == null) {
+            throw new RuntimeException("学生不存在");
+        }
+
+        // TODO: 实现复杂的多表联查逻辑
+        // 需要查询：
+        // 1. 学生选修的课程
+        // 2. 这些课程下的所有任务
+        // 3. 学生对这些任务的提交状态
+        // 4. 根据keyword和status进行筛选
+        
+        // 暂时返回空结果，确保编译通过
+        PageVO<StudentTaskVO> pageVO = new PageVO<>();
+        pageVO.setRecords(new ArrayList<>());
+        pageVO.setTotal(0L);
+        pageVO.setSize(pageSize);
+        pageVO.setCurrent(pageNum);
+        pageVO.setPages(0L);
+        
+        return pageVO;
+    }
+
+    /**
+     * API 3.10 获取学生仪表板统计数据
+     */
+    @Override
+    public StudentDashboardStatsVO getStudentDashboardStats(Long studentId) {
+        // 1. 检查学生是否存在
+        Student student = studentMapper.selectById(studentId);
+        if (student == null) {
+            throw new RuntimeException("学生不存在");
+        }
+
+        // 2. 计算各项统计数据
+        StudentDashboardStatsVO stats = new StudentDashboardStatsVO();
+        
+        // 我的课程数量 - 查询学生选修的课程数
+        LambdaQueryWrapper<CourseStudent> courseQuery = Wrappers.lambdaQuery(CourseStudent.class)
+                .eq(CourseStudent::getStudentId, studentId);
+        Long courseCount = courseStudentMapper.selectCount(courseQuery);
+        stats.setMyCourses(courseCount != null ? courseCount.intValue() : 0);
+        
+        // 待办任务数量 - 目前暂设为固定值，后续可根据实际任务表实现
+        stats.setPendingTasks(3);
+        
+        // 本周提交数量 - 目前暂设为固定值，后续可根据实际提交记录实现
+        stats.setWeeklySubmissions(5);
+        
+        // 未读消息数量 - 目前暂设为固定值，后续可根据实际消息表实现
+        stats.setUnreadMessages(2);
+        
+        // Todo项目统计
+        StudentDashboardStatsVO.TodoItemsVO todoItems = new StudentDashboardStatsVO.TodoItemsVO();
+        todoItems.setPending(4);
+        todoItems.setTotal(10);
+        stats.setTodoItems(todoItems);
+        
+        // 项目数量 - 目前暂设为固定值，后续可根据实际项目表实现
+        stats.setProjects(2);
+
+        return stats;
     }
 }

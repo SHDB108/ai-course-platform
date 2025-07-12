@@ -7,6 +7,7 @@ import com.example.aicourse.utils.Result;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.student.ImportResultVO;
 import com.example.aicourse.vo.student.StudentVO;
+import com.example.aicourse.vo.student.StudentDashboardStatsVO;
 import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -183,6 +184,67 @@ public class StudentController{
         } catch (IOException e) {
             // 导出失败直接返回500或其他错误状态码，ResponseEntity的错误处理与Result不同
             return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    /**
+     * API 3.8 获取学生选修的课程列表
+     * @param studentId 学生ID
+     * @param pageNum 当前页码
+     * @param pageSize 每页数量
+     * @param keyword 搜索关键词
+     * @return 学生课程列表
+     */
+    @GetMapping("/{studentId}/courses")
+    public Result<PageVO<com.example.aicourse.vo.course.CourseVO>> getStudentCourses(
+            @PathVariable Long studentId,
+            @RequestParam(defaultValue="1") Long pageNum,
+            @RequestParam(defaultValue="10") Long pageSize,
+            @RequestParam(required = false) String keyword) {
+        try {
+            PageVO<com.example.aicourse.vo.course.CourseVO> coursePage = service.getStudentCourses(studentId, pageNum, pageSize, keyword);
+            return Result.ok(coursePage);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * API 3.9 获取学生的任务列表
+     * @param studentId 学生ID
+     * @param pageNum 当前页码
+     * @param pageSize 每页数量
+     * @param keyword 搜索关键词
+     * @param status 任务状态筛选
+     * @return 学生任务列表
+     */
+    @GetMapping("/{studentId}/tasks")
+    public Result<PageVO<com.example.aicourse.vo.task.StudentTaskVO>> getStudentTasks(
+            @PathVariable Long studentId,
+            @RequestParam(defaultValue="1") Long pageNum,
+            @RequestParam(defaultValue="10") Long pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status) {
+        try {
+            PageVO<com.example.aicourse.vo.task.StudentTaskVO> taskPage = service.getStudentTasks(studentId, pageNum, pageSize, keyword, status);
+            return Result.ok(taskPage);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * API 3.10 获取学生仪表板统计数据
+     * @param studentId 学生ID
+     * @return 学生仪表板统计数据
+     */
+    @GetMapping("/{studentId}/dashboard/stats")
+    public Result<StudentDashboardStatsVO> getStudentDashboardStats(@PathVariable Long studentId) {
+        try {
+            StudentDashboardStatsVO stats = service.getStudentDashboardStats(studentId);
+            return Result.ok(stats);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
         }
     }
 }

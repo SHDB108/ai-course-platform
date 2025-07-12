@@ -5,6 +5,13 @@ import { ElButton, ElTag, ElCard, ElProgress, ElMessage, ElSelect, ElOption } fr
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
+import {
+  getStudentTasksApi,
+  getStudentTaskStatsApi,
+  type StudentTaskVO,
+  type StudentTaskSummaryStats
+} from '@/api/task'
+import { safeUserIdToString, autoCorrectUserId } from '@/utils/userIdUtils'
 
 defineOptions({
   name: 'StudentTasks'
@@ -14,7 +21,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const loading = ref(false)
-const tableData = ref([])
+const tableData = ref<StudentTaskVO[]>([])
 const pagination = ref({
   current: 1,
   size: 10,
@@ -22,6 +29,14 @@ const pagination = ref({
 })
 
 const filterStatus = ref('')
+
+const summaryData = ref<StudentTaskSummaryStats>({
+  total: 0,
+  pending: 0,
+  submitted: 0,
+  graded: 0,
+  overdue: 0
+})
 
 const columns = [
   {
@@ -83,63 +98,60 @@ const columns = [
 const fetchMyTasks = async () => {
   loading.value = true
   try {
-    const studentId = userStore.getUserInfo?.userId
+    // 获取并修正用户ID
+    const userInfo = userStore.getUserInfo
+    const rawStudentId = userInfo?.userId
+    const correctedIdStr = autoCorrectUserId(rawStudentId || '')
+
+    if (!correctedIdStr || correctedIdStr === '0') {
+      ElMessage.error('未获取到有效的学生信息，请重新登录')
+      return
+    }
+
     const params = {
       current: pagination.value.current,
       size: pagination.value.size,
       status: filterStatus.value || undefined
     }
 
-    // TODO: 调用获取学生任务API
-    // const res = await getStudentTasksApi(studentId, params)
-    // if (res.data) {
-    //   tableData.value = res.data.records
-    //   pagination.value.total = res.data.total
-    // }
+    // 调用获取学生任务API
+    const [tasksRes, statsRes] = await Promise.all([
+      getStudentTasksApi(correctedIdStr, params),
+      getStudentTaskStatsApi(correctedIdStr)
+    ])
 
-    console.log('加载模拟任务数据')
-    // 使用模拟数据
-    tableData.value = [
-      {
-        id: 1,
-        title: 'Vue 组件实现作业',
-        courseName: 'Vue 3 实战教程',
-        type: 'ASSIGNMENT',
-        dueDate: '2024-12-20',
-        maxScore: 100,
-        score: 85,
-        status: 'GRADED',
-        submittedAt: '2024-12-18',
-        submissionId: 1
-      },
-      {
-        id: 2,
-        title: 'TypeScript 类型系统练习',
-        courseName: 'TypeScript 基础',
-        type: 'QUIZ',
-        dueDate: '2024-12-25',
-        maxScore: 50,
-        score: null,
-        status: 'IN_PROGRESS',
-        submittedAt: null,
-        submissionId: null
-      }
-    ]
-    pagination.value.total = 2
-
-    // 更新统计数据
-    summaryData.value = {
-      total: 2,
-      pending: 1,
-      submitted: 0,
-      graded: 1,
-      overdue: 0
+    if (tasksRes.code === 0 && tasksRes.data) {
+      tableData.value = tasksRes.data.records
+      pagination.value.total = tasksRes.data.total
+      pagination.value.current = tasksRes.data.current
+      pagination.value.size = tasksRes.data.size
+    } else {
+      ElMessage.warning('获取任务数据失败，显示默认数据')
+      tableData.value = []
+      pagination.value.total = 0
     }
 
-    ElMessage.success('任务数据加载成功(模拟数据)')
+    if (statsRes.code === 0 && statsRes.data) {
+      summaryData.value = statsRes.data
+    } else {
+      console.warn('获取任务统计数据失败')
+    }
+
+    ElMessage.success(`成功加载 ${tableData.value.length} 条任务数据`)
   } catch (error) {
     console.error('获取任务失败:', error)
     ElMessage.error('获取我的任务失败')
+
+    // 错误情况下使用空数据
+    tableData.value = []
+    pagination.value.total = 0
+    summaryData.value = {
+      total: 0,
+      pending: 0,
+      submitted: 0,
+      graded: 0,
+      overdue: 0
+    }
   } finally {
     loading.value = false
   }
@@ -203,14 +215,6 @@ const getStatusText = (status: string) => {
   }
   return textMap[status] || status
 }
-
-const summaryData = ref({
-  total: 0,
-  pending: 0,
-  submitted: 0,
-  graded: 0,
-  overdue: 0
-})
 
 onMounted(() => {
   fetchMyTasks()

@@ -1,4 +1,5 @@
 import request from '@/axios'
+import type { CourseVO } from '@/api/course'
 
 export interface StudentCreateDTO {
   username: string
@@ -136,4 +137,45 @@ export const exportStudentsApi = (params?: {
     params,
     responseType: 'blob'
   })
+}
+
+/**
+ * 获取学生选修的课程列表
+ */
+export const getStudentCoursesApi = (
+  studentId: string | number, // 支持字符串和数字类型
+  params?: {
+    pageNum?: number
+    pageSize?: number
+    keyword?: string
+  }
+): Promise<IResponse<PageVO<CourseVO>>> => {
+  console.log('调用getStudentCoursesApi，参数:', { studentId, params })
+
+  // 使用真实API调用
+  return request.get({ url: `/students/${studentId}/courses`, params })
+}
+
+/**
+ * 学生仪表板统计数据接口
+ */
+export interface StudentDashboardStats {
+  myCourses: number
+  pendingTasks: number
+  weeklySubmissions: number
+  unreadMessages: number
+  todoItems: {
+    pending: number
+    total: number
+  }
+  projects: number
+}
+
+/**
+ * 获取学生仪表板统计数据
+ */
+export const getStudentDashboardStatsApi = (
+  studentId: string | number
+): Promise<IResponse<StudentDashboardStats>> => {
+  return request.get({ url: `/students/${studentId}/dashboard/stats` })
 }
