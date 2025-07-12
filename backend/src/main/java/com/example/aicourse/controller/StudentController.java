@@ -247,4 +247,19 @@ public class StudentController{
             return Result.error(e.getMessage());
         }
     }
+
+    /**
+     * API 3.11 获取学生任务统计数据
+     * @param studentId 学生ID
+     * @return 学生任务统计数据
+     */
+    @GetMapping("/{studentId}/tasks/stats")
+    public Result<com.example.aicourse.vo.task.StudentTaskStatsVO> getStudentTaskStats(@PathVariable Long studentId) {
+        try {
+            com.example.aicourse.vo.task.StudentTaskStatsVO stats = service.getStudentTaskStats(studentId);
+            return Result.ok(stats);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }

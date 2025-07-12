@@ -14,6 +14,12 @@ spring:
       # 从环境变量 REDIS_HOST 读取，如果未设置，则使用默认的 localhost
       host: ${REDIS_HOST:localhost}
       port: 6379
+  jackson:
+    # 配置Jackson处理Java 8时间类型
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
 
 mybatis-plus:
   configuration:

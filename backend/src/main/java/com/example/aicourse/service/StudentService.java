@@ -108,4 +108,11 @@ public interface StudentService extends IService<Student>{
      * @return 学生仪表板统计数据
      */
     StudentDashboardStatsVO getStudentDashboardStats(Long studentId);
+
+    /**
+     * API 3.11 获取学生任务统计数据
+     * @param studentId 学生ID
+     * @return 学生任务统计数据
+     */
+    com.example.aicourse.vo.task.StudentTaskStatsVO getStudentTaskStats(Long studentId);
 }

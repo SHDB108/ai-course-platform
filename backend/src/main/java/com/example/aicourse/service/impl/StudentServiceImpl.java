@@ -515,4 +515,32 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
 
         return stats;
     }
+
+    /**
+     * API 3.11 获取学生任务统计数据
+     */
+    @Override
+    public com.example.aicourse.vo.task.StudentTaskStatsVO getStudentTaskStats(Long studentId) {
+        // 1. 检查学生是否存在
+        Student student = studentMapper.selectById(studentId);
+        if (student == null) {
+            throw new RuntimeException("学生不存在");
+        }
+
+        // 2. 计算任务统计数据
+        com.example.aicourse.vo.task.StudentTaskStatsVO stats = new com.example.aicourse.vo.task.StudentTaskStatsVO();
+        
+        // TODO: 实现真实的任务统计查询
+        // 目前返回模拟数据，后续需要根据实际的任务表实现
+        stats.setTotalTasks(20);
+        stats.setPendingTasks(3);
+        stats.setInProgressTasks(2);
+        stats.setCompletedTasks(15);
+        stats.setOverdueTasks(1);
+        stats.setCompletionRate(75.0);
+        stats.setThisWeekCompleted(4);
+        stats.setThisMonthCompleted(12);
+
+        return stats;
+    }
 }
