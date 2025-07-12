@@ -7,14 +7,16 @@ import com.example.aicourse.service.CourseService;
 import com.example.aicourse.utils.Result;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.course.CourseVO;
-import com.example.aicourse.vo.student.StudentVO; // 导入 StudentVO
+import com.example.aicourse.vo.student.StudentVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 
 @RestController
-@RequestMapping("api/v1/courses") // 统一路径前缀
+@RequestMapping("/api/v1/courses")
 public class CourseController {
 
     private final CourseService courseService;
@@ -44,9 +46,11 @@ public class CourseController {
             @RequestParam(required = false) String keyword, // 新增参数
             @RequestParam(required = false) String semester,
             @RequestParam(required = false) Integer credits,
-            @RequestParam(required = false) String department) {
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String status, // 新增状态筛选
+            @RequestParam(required = false) Long categoryId) { // 新增分类筛选
         try {
-            PageVO<CourseVO> courses = courseService.listCourses(pageNum, pageSize, teacherId, keyword, semester, credits, department);
+            PageVO<CourseVO> courses = courseService.listCourses(pageNum, pageSize, teacherId, keyword, semester, credits, department, status, categoryId);
             return Result.ok(courses);
         } catch (RuntimeException e) {
             return Result.error("获取课程列表失败: " + e.getMessage());
@@ -139,6 +143,40 @@ public class CourseController {
             return Result.ok();
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * API 4.9 更新课程状态
+     * @param id 课程ID
+     * @param status 新状态
+     * @return null
+     */
+    @PutMapping("/{id}/status")
+    public Result<Void> updateCourseStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
+        try {
+            boolean success = courseService.updateCourseStatus(id, request.getStatus());
+            if (!success) {
+                return Result.error("更新课程状态失败或课程不存在");
+            }
+            return Result.ok();
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 状态更新请求体
+     */
+    public static class StatusUpdateRequest {
+        private String status;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
         }
     }
 

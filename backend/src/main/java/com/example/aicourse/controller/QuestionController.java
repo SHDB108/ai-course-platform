@@ -50,7 +50,7 @@ public class QuestionController {
             @RequestParam(required = false) String keyword
     ) {
         Page<QuestionVO> resultPage = questionService.list(page, size, courseId, type, difficulty, knowledge, keyword);
-        PageVO<QuestionVO> pageVO = new PageVO<>(resultPage.getRecords(), resultPage.getTotal(), resultPage.getSize(), resultPage.getCurrent());
+        PageVO<QuestionVO> pageVO = new PageVO<>(resultPage.getRecords(), resultPage.getTotal(), resultPage.getSize(), resultPage.getCurrent(), resultPage.getPages());
         return Result.ok(pageVO);
     }
 

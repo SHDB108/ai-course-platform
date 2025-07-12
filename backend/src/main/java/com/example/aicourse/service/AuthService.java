@@ -1,5 +1,6 @@
 package com.example.aicourse.service;
 
+import com.example.aicourse.dto.auth.AdminRegisterDTO;
 import com.example.aicourse.dto.auth.ForgotPasswordRequestDTO;
 import com.example.aicourse.dto.auth.LoginRequestDTO;
 import com.example.aicourse.dto.auth.PasswordResetDTO;
@@ -24,6 +25,13 @@ public interface AuthService extends UserDetailsService {
      * @return 注册成功返回新用户ID，否则返回null
      */
     Long registerTeacher(TeacherRegisterDTO dto);
+
+    /**
+     * 管理员用户注册
+     * @param dto 管理员注册请求DTO
+     * @return 注册成功返回新用户ID，否则返回null
+     */
+    Long registerAdmin(AdminRegisterDTO dto);
 
     /**
      * 用户登出

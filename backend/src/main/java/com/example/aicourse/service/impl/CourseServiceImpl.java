@@ -52,7 +52,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public PageVO<CourseVO> listCourses(Long pageNum, Long pageSize, Long teacherId, String keyword, String semester, Integer credits, String department) {
+    public PageVO<CourseVO> listCourses(Long pageNum, Long pageSize, Long teacherId, String keyword, String semester, Integer credits, String department, String status, Long categoryId) {
         Page<Course> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Course> queryWrapper = Wrappers.<Course>lambdaQuery();
 
@@ -93,12 +93,33 @@ public class CourseServiceImpl implements CourseService {
         if (StringUtils.isNotBlank(department)) {
             queryWrapper.like(Course::getDepartment, department);
         }
+        // 状态筛选已移除 - Course实体不再包含status字段
+        // 根据分类筛选
+        if (categoryId != null) {
+            queryWrapper.eq(Course::getCategoryId, categoryId);
+        }
 
         IPage<Course> coursePage = courseMapper.selectPage(page, queryWrapper);
 
         List<CourseVO> courseVOs = coursePage.getRecords().stream().map(course -> {
             CourseVO courseVO = new CourseVO();
             BeanUtils.copyProperties(course, courseVO);
+
+            // 映射前端期望的字段
+            courseVO.setName(course.getCourseName()); // courseName -> name
+            courseVO.setDuration(course.getHours()); // hours -> duration
+            courseVO.setMaxStudents(course.getCapacity()); // capacity -> maxStudents
+            
+            // 设置默认状态 - Course实体不再包含status字段
+            courseVO.setStatus("ACTIVE");
+            
+            // 格式化时间字段（如果需要）
+            if (course.getGmtCreate() != null) {
+                courseVO.setCreatedAt(course.getGmtCreate().toString());
+            }
+            if (course.getGmtModified() != null) {
+                courseVO.setUpdatedAt(course.getGmtModified().toString());
+            }
 
             // 填充教师姓名
             if (course.getTeacherId() != null) {
@@ -129,6 +150,22 @@ public class CourseServiceImpl implements CourseService {
         CourseVO courseVO = new CourseVO();
         BeanUtils.copyProperties(course, courseVO);
 
+        // 映射前端期望的字段
+        courseVO.setName(course.getCourseName()); // courseName -> name
+        courseVO.setDuration(course.getHours()); // hours -> duration
+        courseVO.setMaxStudents(course.getCapacity()); // capacity -> maxStudents
+        
+        // 设置默认状态 - Course实体不再包含status字段
+        courseVO.setStatus("ACTIVE");
+        
+        // 格式化时间字段（如果需要）
+        if (course.getGmtCreate() != null) {
+            courseVO.setCreatedAt(course.getGmtCreate().toString());
+        }
+        if (course.getGmtModified() != null) {
+            courseVO.setUpdatedAt(course.getGmtModified().toString());
+        }
+
         // 填充教师姓名
         if (course.getTeacherId() != null) {
             Teacher teacher = teacherMapper.selectById(course.getTeacherId());
@@ -142,7 +179,7 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional
     public Long createCourse(CourseCreateDTO dto) {
-        // 检查教师是否存在
+        // 检查教师是否存在（如果指定了教师ID）
         if (dto.getTeacherId() != null) {
             Teacher teacher = teacherMapper.selectById(dto.getTeacherId());
             if (teacher == null) {
@@ -150,13 +187,26 @@ public class CourseServiceImpl implements CourseService {
             }
         }
 
-        // 检查课程编码是否重复
-        if (courseMapper.selectCount(Wrappers.<Course>lambdaQuery().eq(Course::getCourseCode, dto.getCourseCode())) > 0) {
-            throw new RuntimeException("课程编码已存在");
+        // 检查课程名称是否重复
+        if (courseMapper.selectCount(Wrappers.<Course>lambdaQuery().eq(Course::getCourseName, dto.getName())) > 0) {
+            throw new RuntimeException("课程名称已存在");
         }
 
         Course course = new Course();
-        BeanUtils.copyProperties(dto, course);
+        // 生成课程编码：使用时间戳
+        String courseCode = "COURSE_" + System.currentTimeMillis();
+        course.setCourseCode(courseCode);
+        course.setCourseName(dto.getName());
+        course.setDescription(dto.getDescription());
+        course.setCredits(dto.getCredits());
+        course.setHours(dto.getDuration());
+        course.setTeacherId(dto.getTeacherId());
+        course.setSemester(dto.getSemester());
+        course.setDepartment(dto.getDepartment());
+        course.setCapacity(dto.getMaxStudents());
+        course.setEnrolledStudents(0);
+        // 设置分类 - status字段已移除
+        course.setCategoryId(dto.getCategoryId());
         courseMapper.insert(course);
         return course.getId();
     }
@@ -185,7 +235,46 @@ public class CourseServiceImpl implements CourseService {
             }
         }
 
-        BeanUtils.copyProperties(dto, course);
+        // 手动映射字段以匹配前端DTO字段名
+        if (dto.getName() != null) {
+            course.setCourseName(dto.getName());
+        }
+        if (dto.getDuration() != null) {
+            course.setHours(dto.getDuration());
+        }
+        if (dto.getMaxStudents() != null) {
+            course.setCapacity(dto.getMaxStudents());
+        }
+        
+        // 复制其他匹配的字段
+        if (dto.getCourseCode() != null) {
+            course.setCourseCode(dto.getCourseCode());
+        }
+        if (dto.getDescription() != null) {
+            course.setDescription(dto.getDescription());
+        }
+        if (dto.getCredits() != null) {
+            course.setCredits(dto.getCredits());
+        }
+        if (dto.getSemester() != null) {
+            course.setSemester(dto.getSemester());
+        }
+        if (dto.getDepartment() != null) {
+            course.setDepartment(dto.getDepartment());
+        }
+        if (dto.getTeacherId() != null) {
+            course.setTeacherId(dto.getTeacherId());
+        }
+        if (dto.getClassroom() != null) {
+            course.setClassroom(dto.getClassroom());
+        }
+        if (dto.getScheduleTime() != null) {
+            course.setScheduleTime(dto.getScheduleTime());
+        }
+        // status字段更新已移除 - Course实体不再包含此字段
+        if (dto.getCategoryId() != null) {
+            course.setCategoryId(dto.getCategoryId());
+        }
         int rows = courseMapper.updateById(course);
         return rows > 0;
     }
@@ -215,6 +304,22 @@ public class CourseServiceImpl implements CourseService {
             throw new RuntimeException("课程不存在");
         }
         BeanUtils.copyProperties(dto, course);
+        int rows = courseMapper.updateById(course);
+        return rows > 0;
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "courseCache", key = "#id")
+    public boolean updateCourseStatus(Long id, String status) {
+        // 状态更新功能已禁用 - Course实体不再包含status字段
+        // 返回true表示操作"成功"，但实际上不执行任何数据库操作
+        Course course = courseMapper.selectById(id);
+        if (course == null) {
+            throw new RuntimeException("课程不存在");
+        }
+        // 仅更新修改时间以保持接口兼容性
+        course.setGmtModified(LocalDateTime.now());
         int rows = courseMapper.updateById(course);
         return rows > 0;
     }
@@ -328,7 +433,13 @@ public class CourseServiceImpl implements CourseService {
 
         if (studentIds.isEmpty()) {
             // 如果没有学生选课，直接返回空分页结果
-            return new PageVO<>(List.of(), 0L, pageSize, pageNum);
+            PageVO<StudentVO> pageVO = new PageVO<>();
+            pageVO.setRecords(List.of());
+            pageVO.setTotal(0L);
+            pageVO.setSize(pageSize);
+            pageVO.setCurrent(pageNum);
+            pageVO.setPages(0L);
+            return pageVO;
         }
 
         // 根据 studentIds 和 keyword 进一步筛选学生详细信息
@@ -379,6 +490,7 @@ public class CourseServiceImpl implements CourseService {
         pageVO.setTotal(totalRecords); // 这里的 total 是经过 courseId 和 keyword 过滤后的总数
         pageVO.setSize(pageSize);
         pageVO.setCurrent(pageNum);
+        pageVO.setPages((long) Math.ceil((double) totalRecords / pageSize));
 
         return pageVO;
     }

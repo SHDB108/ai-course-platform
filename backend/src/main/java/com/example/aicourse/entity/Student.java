@@ -21,4 +21,21 @@ public class Student{
 
  @TableField(fill = FieldFill.INSERT_UPDATE)
  private LocalDateTime gmtModified;
+ 
+ // 兼容Service层的方法名
+ public LocalDateTime getCreatedAt() {
+     return gmtCreate;
+ }
+ 
+ public void setCreatedAt(LocalDateTime createdAt) {
+     this.gmtCreate = createdAt;
+ }
+ 
+ public LocalDateTime getUpdatedAt() {
+     return gmtModified;
+ }
+ 
+ public void setUpdatedAt(LocalDateTime updatedAt) {
+     this.gmtModified = updatedAt;
+ }
 }

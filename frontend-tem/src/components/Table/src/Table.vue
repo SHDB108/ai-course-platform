@@ -218,7 +218,7 @@ export default defineComponent({
     // 注册
     onMounted(() => {
       const tableRef = unref(elTableRef)
-      emit('register', tableRef?.$parent, elTableRef)
+      emit('register', tableRef?.$parent, elTableRef.value)
     })
 
     const pageSizeRef = ref(props.pageSize)
@@ -363,8 +363,8 @@ export default defineComponent({
 
             return children && children.length
               ? renderTreeTableColumn(children)
-              : props?.slots?.default
-                ? props.slots.default(...args)
+              : getSlot(slots, v.field)
+                ? getSlot(slots, v.field, args)
                 : v?.formatter
                   ? v?.formatter?.(data.row, data.column, get(data.row, v.field), data.$index)
                   : isPreview
@@ -372,8 +372,8 @@ export default defineComponent({
                     : get(data.row, v.field)
           }
         }
-        if (props?.slots?.header) {
-          slots['header'] = (...args: any[]) => props.slots.header(...args)
+        if (getSlot(slots, `${v.field}-header`)) {
+          slots['header'] = (...args: any[]) => getSlot(slots, `${v.field}-header`, args)
         }
 
         return (
@@ -478,8 +478,8 @@ export default defineComponent({
 
               return children && children.length
                 ? renderTreeTableColumn(children)
-                : props?.slots?.default
-                  ? props.slots.default(...args)
+                : getSlot(slots, v.field)
+                  ? getSlot(slots, v.field, args)
                   : v?.formatter
                     ? v?.formatter?.(data.row, data.column, get(data.row, v.field), data.$index)
                     : isPreview
@@ -487,8 +487,8 @@ export default defineComponent({
                       : get(data.row, v.field)
             }
           }
-          if (props?.slots?.header) {
-            slots['header'] = (...args: any[]) => props.slots.header(...args)
+          if (getSlot(slots, `${v.field}-header`)) {
+            slots['header'] = (...args: any[]) => getSlot(slots, `${v.field}-header`, args)
           }
 
           return (

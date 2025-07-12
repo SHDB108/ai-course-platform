@@ -3,6 +3,7 @@ import type {
   LoginResponseVO,
   StudentRegisterType,
   TeacherRegisterType,
+  AdminRegisterType,
   UserLoginType
 } from './types'
 
@@ -34,4 +35,8 @@ export const registerStudentApi = (data: StudentRegisterType): Promise<IResponse
 
 export const registerTeacherApi = (data: TeacherRegisterType): Promise<IResponse> => {
   return request.post({ url: 'auth/register/teacher', data })
+}
+
+export const registerAdminApi = (data: AdminRegisterType): Promise<IResponse> => {
+  return request.post({ url: 'auth/register/admin', data })
 }

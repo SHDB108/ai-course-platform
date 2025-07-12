@@ -13,4 +13,5 @@ public class PageVO<T> {
     private long total;
     private long size;
     private long current;
+    private long pages; // 总页数
 }

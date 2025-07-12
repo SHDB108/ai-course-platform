@@ -190,15 +190,45 @@ export default defineComponent({
       formItemComponents.value[filed] = ref
     }
 
+    // 获取表单的值
+    const getValues = () => {
+      return unref(formModel)
+    }
+
+    // 表单验证
+    const validate = async (callback?: Function) => {
+      return await unref(elFormRef)?.validate(callback)
+    }
+
+    // 验证指定字段
+    const validateField = async (props: string | string[], callback?: Function) => {
+      return await unref(elFormRef)?.validateField(props, callback)
+    }
+
+    // 重置表单
+    const resetFields = () => {
+      unref(elFormRef)?.resetFields()
+    }
+
+    // 清除验证信息
+    const clearValidate = (props?: string | string[]) => {
+      unref(elFormRef)?.clearValidate(props)
+    }
+
     expose({
       setValues,
+      getValues,
       formModel,
       setProps,
       delSchema,
       addSchema,
       setSchema,
       getComponentExpose,
-      getFormItemExpose
+      getFormItemExpose,
+      validate,
+      validateField,
+      resetFields,
+      clearValidate
     })
 
     // 监听表单结构化数组，重新生成formModel

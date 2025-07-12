@@ -7,13 +7,10 @@ export interface PermissionState {
   routers: AppRouteRecordRaw[]
   addRouters: AppRouteRecordRaw[]
   isAddRouters: boolean
+  menuTabRouters: AppRouteRecordRaw[]
 }
 
-/**
- * 递归地根据角色过滤异步路由
- * @param routes asyncRoutes
- * @param roles 用户的角色
- */
+// 递归地根据角色过滤异步路由
 function filterAsyncRoutes(routes: AppRouteRecordRaw[], roles: string[]): AppRouteRecordRaw[] {
   const res: AppRouteRecordRaw[] = []
 
@@ -22,8 +19,9 @@ function filterAsyncRoutes(routes: AppRouteRecordRaw[], roles: string[]): AppRou
     if (hasPermission(roles, tmp)) {
       if (tmp.children) {
         tmp.children = filterAsyncRoutes(tmp.children, roles)
-        // 如果过滤后的子路由不为空，则父路由也应该显示
-        if (tmp.children.length > 0) {
+        // 改进：即使子路由为空，如果父路由有权限也应该显示
+        // 但是如果父路由没有定义组件且子路由为空，则不显示
+        if (tmp.children.length > 0 || tmp.component) {
           res.push(tmp)
         }
       } else {
@@ -35,19 +33,12 @@ function filterAsyncRoutes(routes: AppRouteRecordRaw[], roles: string[]): AppRou
   return res
 }
 
-/**
- * 判断用户角色是否有权限访问该路由
- * @param roles 用户的角色
- * @param route 当前路由
- */
+// 判断用户角色是否有权限访问该路由
 function hasPermission(roles: string[], route: AppRouteRecordRaw): boolean {
   if (route.meta && route.meta.roles) {
-    // some() 方法测试数组中是不是至少有1个元素通过了被提供的函数测试
-    // 这里是判断用户的角色数组中，是否至少有一个角色存在于路由的 meta.roles 中
     return roles.some((role) => (route.meta.roles as string[]).includes(role))
   } else {
-    // 如果路由没有定义 meta.roles，则默认所有角色都可以访问
-    return true
+    return true // 如果路由没有定义 meta.roles，则默认所有角色都可以访问
   }
 }
 
@@ -55,7 +46,8 @@ export const usePermissionStore = defineStore('permission', {
   state: (): PermissionState => ({
     routers: [],
     addRouters: [],
-    isAddRouters: false
+    isAddRouters: false,
+    menuTabRouters: []
   }),
   getters: {
     getRouters(): AppRouteRecordRaw[] {
@@ -66,20 +58,16 @@ export const usePermissionStore = defineStore('permission', {
     },
     getIsAddRouters(): boolean {
       return this.isAddRouters
+    },
+    getMenuTabRouters(): AppRouteRecordRaw[] {
+      return this.menuTabRouters
     }
   },
   actions: {
-    // 根据角色生成路由
     generateRoutes(roles: string[]): Promise<AppRouteRecordRaw[]> {
       return new Promise((resolve) => {
-        let accessedRouters: AppRouteRecordRaw[] = []
-        // 如果角色中包含 'ADMIN'，则拥有所有路由权限
-        if (roles.includes('ADMIN')) {
-          accessedRouters = cloneDeep(asyncRoutes)
-        } else {
-          // 否则，根据角色过滤路由
-          accessedRouters = filterAsyncRoutes(cloneDeep(asyncRoutes), roles)
-        }
+        // 所有角色都使用过滤逻辑，包括管理员
+        const accessedRouters = filterAsyncRoutes(cloneDeep(asyncRoutes), roles)
         this.addRouters = accessedRouters
         this.routers = cloneDeep(constantRoutes).concat(accessedRouters)
         this.isAddRouters = true
@@ -88,9 +76,18 @@ export const usePermissionStore = defineStore('permission', {
     },
     setIsAddRouters(state: boolean) {
       this.isAddRouters = state
+    },
+    setMenuTabRouters(routers: AppRouteRecordRaw[]) {
+      this.menuTabRouters = routers
+    },
+    // 新增：重置权限状态
+    reset() {
+      this.routers = []
+      this.addRouters = []
+      this.isAddRouters = false
+      this.menuTabRouters = []
     }
   },
-  // 开启持久化
   persist: true
 })
 

@@ -44,7 +44,7 @@ public class PaperController {
             @RequestParam(required = false) String title
     ) {
         Page<QuizPaperVO> resultPage = paperService.list(page, size, courseId, title);
-        PageVO<QuizPaperVO> pageVO = new PageVO<>(resultPage.getRecords(), resultPage.getTotal(), resultPage.getSize(), resultPage.getCurrent());
+        PageVO<QuizPaperVO> pageVO = new PageVO<>(resultPage.getRecords(), resultPage.getTotal(), resultPage.getSize(), resultPage.getCurrent(), resultPage.getPages());
         return Result.ok(pageVO);
     }
 

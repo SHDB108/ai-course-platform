@@ -12,7 +12,7 @@ import java.util.List;
 public interface CourseService {
 
     // 修改 listCourses 方法签名，新增 teacherId 和 keyword 参数，并保留其他参数
-    PageVO<CourseVO> listCourses(Long pageNum, Long pageSize, Long teacherId, String keyword, String semester, Integer credits, String department);
+    PageVO<CourseVO> listCourses(Long pageNum, Long pageSize, Long teacherId, String keyword, String semester, Integer credits, String department, String status, Long categoryId);
 
     // 保持原有的方法
     CourseVO getCourseDetail(Long id);
@@ -24,6 +24,9 @@ public interface CourseService {
     boolean deleteCourse(Long id);
 
     boolean scheduleCourse(Long id, CourseScheduleDTO dto);
+
+    // 新增：更新课程状态
+    boolean updateCourseStatus(Long id, String status);
 
     // 新增：API 4.6 学生选课
     boolean enrollStudent(Long courseId, Long studentId);

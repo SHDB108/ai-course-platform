@@ -22,6 +22,6 @@ public class StudentVO {
     // ====== 新增字段以从User实体填充 ======
     private String username; // 用户名
     private String role;     // 用户角色
-    private Integer status;  // 用户状态
+    private Integer status;   // 用户状态 (修改为Integer类型以匹配User实体: 1=ACTIVE, 0=INACTIVE, -1=SUSPENDED, -2=DELETED)
     // ======================================
 }

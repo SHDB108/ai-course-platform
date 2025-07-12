@@ -39,13 +39,14 @@ public class StudentController{
      */
     @GetMapping
     public Result<PageVO<StudentVO>> getStudentPage(
-            @RequestParam(defaultValue="1") Long page,
-            @RequestParam(defaultValue="10") Long size,
+            @RequestParam(defaultValue="1") Long pageNum,
+            @RequestParam(defaultValue="10") Long pageSize,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String major,
-            @RequestParam(required = false) String grade){
+            @RequestParam(required = false) String grade,
+            @RequestParam(required = false) String status){
         try {
-            PageVO<StudentVO> studentPage = service.getStudentPage(page, size, keyword, major, grade);
+            PageVO<StudentVO> studentPage = service.getStudentPage(pageNum, pageSize, keyword, major, grade, status);
             return Result.ok(studentPage);
         } catch (Exception e) {
             return Result.error("获取学生列表失败: " + e.getMessage());
@@ -131,6 +132,37 @@ public class StudentController{
             return Result.error("文件导入失败: " + e.getMessage());
         } catch (Exception e) {
             return Result.error("导入过程中发生错误: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API 3.8 更新学生状态
+     * @param id 学生ID
+     * @param dto 状态更新DTO
+     * @return null
+     */
+    @PutMapping("/{id}/status")
+    public Result<Void> updateStudentStatus(@PathVariable Long id, @Valid @RequestBody StudentStatusUpdateDTO dto){
+        try {
+            service.updateStudentStatus(id, dto.getStatus());
+            return Result.ok();
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 学生状态更新DTO
+     */
+    public static class StudentStatusUpdateDTO {
+        private String status;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
         }
     }
 

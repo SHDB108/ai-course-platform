@@ -1,11 +1,14 @@
 package com.example.aicourse.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data @TableName("t_course")
+@Data
+@TableName("t_course")
+@Getter
 public class Course{
 
  @TableId(type = IdType.AUTO)
@@ -22,6 +25,7 @@ public class Course{
  private String scheduleTime; // 新增：上课时间 (来自CourseVO/CourseCreateDTO)
  private Integer capacity; // 新增：课程容量 (来自CourseCreateDTO)
  private Integer enrolledStudents; // 新增：已选学生数 (CourseServiceImpl中用到并初始化为0)
+ private Long categoryId; // 新增：课程分类ID
 
  @TableField(fill = FieldFill.INSERT)
  private LocalDateTime gmtCreate;

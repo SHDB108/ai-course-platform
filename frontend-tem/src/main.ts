@@ -27,6 +27,9 @@ import '@/plugins/animate.css'
 // 路由
 import { setupRouter } from './router'
 
+// 应用初始化
+import { initializeApp } from '@/utils/appInit'
+
 import { createApp } from 'vue'
 
 import App from './App.vue'
@@ -40,6 +43,9 @@ const setupAll = async () => {
   await setupI18n(app)
 
   setupStore(app)
+
+  // 在 store 设置完成后，初始化应用状态
+  await initializeApp()
 
   setupGlobCom(app)
 

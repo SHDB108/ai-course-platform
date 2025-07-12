@@ -9,5 +9,5 @@ import lombok.Data;
 @Data
 public class UserStatusUpdateDTO {
     @NotNull(message = "用户状态不能为空")
-    private Integer status; // 0=禁用, 1=启用
+    private String status; // ACTIVE=启用, INACTIVE=禁用, SUSPENDED=暂停, DELETED=删除
 }

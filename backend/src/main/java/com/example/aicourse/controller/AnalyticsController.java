@@ -5,6 +5,7 @@ import com.example.aicourse.service.AnalyticsService;
 import com.example.aicourse.utils.Result;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.course.TrendPointVO;
+import com.example.aicourse.vo.analytics.AnalyticsOverviewVO;
 import com.example.aicourse.vo.analytics.CourseStudentScoreVO;
 import com.example.aicourse.vo.analytics.KnowledgePointPerformanceVO;
 import com.example.aicourse.vo.analytics.StudentCoursePerformanceVO;
@@ -27,6 +28,19 @@ public class AnalyticsController {
     @Autowired
     public AnalyticsController(AnalyticsService service) {
         this.service = service;
+    }
+
+    /**
+     * 获取分析概览数据
+     */
+    @GetMapping("/overview")
+    public Result<AnalyticsOverviewVO> getAnalyticsOverview() {
+        try {
+            AnalyticsOverviewVO overview = service.getAnalyticsOverview();
+            return Result.ok(overview);
+        } catch (Exception e) {
+            return Result.error("获取分析概览失败：" + e.getMessage());
+        }
     }
 
     /**
@@ -59,7 +73,7 @@ public class AnalyticsController {
             @RequestParam(defaultValue = "1") long page,
             @RequestParam(defaultValue = "10") long size) {
         Page<CourseStudentScoreVO> resultPage = service.getCourseStudentScores(courseId, new Page<>(page, size));
-        PageVO<CourseStudentScoreVO> pageVO = new PageVO<>(resultPage.getRecords(), resultPage.getTotal(), resultPage.getSize(), resultPage.getCurrent());
+        PageVO<CourseStudentScoreVO> pageVO = new PageVO<>(resultPage.getRecords(), resultPage.getTotal(), resultPage.getSize(), resultPage.getCurrent(), resultPage.getPages());
         return Result.ok(pageVO);
     }
 

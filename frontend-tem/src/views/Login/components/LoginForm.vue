@@ -211,7 +211,6 @@ const signIn = async () => {
 
       try {
         const res = await loginApi(formData)
-        console.log('登录成功')
         if (res) {
           console.log(res.data)
           userStore.setUserInfo(res.data)

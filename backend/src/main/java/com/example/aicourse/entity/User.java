@@ -26,7 +26,7 @@ public class User implements UserDetails {
     private String email;
     private String phone;
     private String role; // e.g., 'STUDENT', 'TEACHER', 'ADMIN'
-    private Integer status; // e.g., 0=disabled, 1=enabled
+    private Integer status; // 1=ACTIVE, 0=INACTIVE, -1=SUSPENDED, -2=DELETED
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime gmtCreate;
@@ -35,6 +35,23 @@ public class User implements UserDetails {
     private LocalDateTime gmtModified;
 
     private LocalDateTime lastLoginTime;
+    
+    // 兼容Service层的方法名
+    public LocalDateTime getCreatedAt() {
+        return gmtCreate;
+    }
+    
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.gmtCreate = createdAt;
+    }
+    
+    public LocalDateTime getUpdatedAt() {
+        return gmtModified;
+    }
+    
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.gmtModified = updatedAt;
+    }
 
     @Override
     @JsonIgnore
@@ -59,7 +76,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        // 账户是否启用，使用我们自己的status字段
-        return this.status != null && this.status == 1;
+        // 账户是否启用，使用我们自己的status字段 (1=ACTIVE)
+        return Integer.valueOf(1).equals(this.status);
     }
 }

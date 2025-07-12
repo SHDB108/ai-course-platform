@@ -1,5 +1,6 @@
 package com.example.aicourse.controller;
 
+import com.example.aicourse.dto.auth.AdminRegisterDTO;
 import com.example.aicourse.dto.auth.ForgotPasswordRequestDTO;
 import com.example.aicourse.dto.auth.LoginRequestDTO;
 import com.example.aicourse.dto.auth.PasswordResetDTO;
@@ -72,7 +73,20 @@ public class AuthController {
     }
 
     /**
-     * API 2.4 用户登出
+     * API 2.4 用户注册 (管理员)
+     */
+    @PostMapping("/register/admin")
+    public Result<Long> registerAdmin(@Valid @RequestBody AdminRegisterDTO request) {
+        try {
+            Long newUserId = authService.registerAdmin(request);
+            return Result.ok(newUserId);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * API 2.5 用户登出
      */
     @PostMapping("/logout")
     public Result<Void> logout() {
@@ -81,7 +95,7 @@ public class AuthController {
     }
 
     /**
-     * API 2.5 获取当前用户信息
+     * API 2.6 获取当前用户信息
      */
     @GetMapping("/users/me") // 路径为 /api/v1/auth/users/me
     public Result<UserDetailVO> getCurrentUserInfo() {
@@ -94,7 +108,7 @@ public class AuthController {
     }
 
     /**
-     * API 2.6 修改用户密码
+     * API 2.7 修改用户密码
      */
     @PutMapping("/users/{id}/password") // 路径为 /api/v1/auth/users/{id}/password
     public Result<Void> updatePassword(
@@ -109,7 +123,7 @@ public class AuthController {
     }
 
     /**
-     * API 2.7 请求密码重置
+     * API 2.8 请求密码重置
      */
     @PostMapping("/forgot-password/request")
     public Result<String> requestPasswordReset(@Valid @RequestBody ForgotPasswordRequestDTO request) {
@@ -122,7 +136,7 @@ public class AuthController {
     }
 
     /**
-     * API 2.8 执行密码重置
+     * API 2.9 执行密码重置
      */
     @PostMapping("/forgot-password/reset")
     public Result<Void> resetPassword(@Valid @RequestBody PasswordResetDTO request) {

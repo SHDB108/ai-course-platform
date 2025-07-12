@@ -1,0 +1,2 @@
+错误: 无法初始化主类 com.example.aicourse.AICourseApplication
+原因: java.lang.NoClassDefFoundError: org/springframework/web/client/RestTemplate

@@ -2,6 +2,7 @@ package com.example.aicourse.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.aicourse.vo.course.TrendPointVO;
+import com.example.aicourse.vo.analytics.AnalyticsOverviewVO;
 import com.example.aicourse.vo.analytics.CourseStudentScoreVO;
 import com.example.aicourse.vo.analytics.KnowledgePointPerformanceVO;
 import com.example.aicourse.vo.analytics.StudentCoursePerformanceVO;
@@ -12,6 +13,12 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface AnalyticsService {
+    
+    /**
+     * 获取分析概览数据
+     */
+    AnalyticsOverviewVO getAnalyticsOverview();
+    
     /**
      * 获取课程成绩趋势 (API 10.1)
      * @param courseId 课程ID

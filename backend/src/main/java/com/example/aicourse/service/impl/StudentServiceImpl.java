@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.aicourse.dto.student.StudentCreateDTO;
 import com.example.aicourse.dto.student.StudentUpdateDTO;
 import com.example.aicourse.entity.Student;
+import com.example.aicourse.entity.User;
+import com.example.aicourse.repository.UserMapper;
 import com.example.aicourse.repository.StudentMapper;
 import com.example.aicourse.service.StudentService;
 import com.example.aicourse.vo.PageVO;
@@ -28,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,17 +39,19 @@ import java.util.stream.Collectors;
 public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> implements StudentService{
 
     private final StudentMapper studentMapper;
+    private final UserMapper userMapper;
 
     @Autowired
-    public StudentServiceImpl(StudentMapper studentMapper) {
+    public StudentServiceImpl(StudentMapper studentMapper, UserMapper userMapper) {
         this.studentMapper = studentMapper;
+        this.userMapper = userMapper;
     }
 
     /**
      * API 3.1 获取学生列表 (分页)
      */
     @Override
-    public PageVO<StudentVO> getStudentPage(Long pageNum, Long pageSize, String keyword, String major, String grade) {
+    public PageVO<StudentVO> getStudentPage(Long pageNum, Long pageSize, String keyword, String major, String grade, String status) {
         Page<Student> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Student> queryWrapper = Wrappers.<Student>lambdaQuery();
 
@@ -61,6 +66,9 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
         if (StringUtils.isNotBlank(grade)) {
             queryWrapper.eq(Student::getGrade, grade);
         }
+        // Note: Status filtering removed - Student entity doesn't have status field
+        // Status should be managed through User entity relationship
+        // TODO: Implement status filtering through User entity join query
 
         Page<Student> studentPage = studentMapper.selectPage(page, queryWrapper);
 
@@ -77,8 +85,57 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper,Student> imple
         pageVO.setTotal(studentPage.getTotal());
         pageVO.setSize(studentPage.getSize());
         pageVO.setCurrent(studentPage.getCurrent());
+        pageVO.setPages(studentPage.getPages());
 
         return pageVO;
+    }
+
+    /**
+     * API 3.8 更新学生状态
+     * Status is managed through User entity, not Student entity directly
+     */
+    @Override
+    @CacheEvict(value = "studentCache", key = "#id")
+    public boolean updateStudentStatus(Long id, String status) {
+        Student student = studentMapper.selectById(id);
+        if (student == null) {
+            throw new RuntimeException("学生不存在");
+        }
+        
+        // Check if student has associated user
+        if (student.getId() == null) {
+            throw new RuntimeException("学生未关联用户账户，无法更新状态");
+        }
+        
+        User user = userMapper.selectById(student.getId());
+        if (user == null) {
+            throw new RuntimeException("关联的用户账户不存在");
+        }
+        
+        // Convert string status to integer status for User entity
+        Integer statusInt;
+        switch (status) {
+            case "ACTIVE":
+                statusInt = 1;
+                break;
+            case "INACTIVE":
+                statusInt = 0;
+                break;
+            case "SUSPENDED":
+                statusInt = -1;
+                break;
+            case "DELETED":
+                statusInt = -2;
+                break;
+            default:
+                throw new RuntimeException("无效的状态值: " + status);
+        }
+        
+        // Update user status
+        user.setStatus(statusInt);
+        user.setUpdatedAt(LocalDateTime.now());
+        int rows = userMapper.updateById(user);
+        return rows > 0;
     }
 
     /**

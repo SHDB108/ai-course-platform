@@ -23,7 +23,7 @@ public interface StudentService extends IService<Student>{
      * @param grade 按年级筛选
      * @return 分页的学生信息列表
      */
-    PageVO<StudentVO> getStudentPage(Long pageNum, Long pageSize, String keyword, String major, String grade);
+    PageVO<StudentVO> getStudentPage(Long pageNum, Long pageSize, String keyword, String major, String grade, String status);
 
     /**
      * API 3.2 获取学生详情
@@ -61,6 +61,14 @@ public interface StudentService extends IService<Student>{
      * @throws IOException 文件处理异常
      */
     ImportResultVO importStudents(MultipartFile file) throws IOException;
+
+    /**
+     * API 3.8 更新学生状态
+     * @param id 学生ID
+     * @param status 新状态
+     * @return 更新成功返回true
+     */
+    boolean updateStudentStatus(Long id, String status);
 
     /**
      * API 3.7 导出学生信息

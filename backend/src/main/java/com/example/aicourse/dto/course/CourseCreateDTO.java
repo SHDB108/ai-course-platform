@@ -9,21 +9,23 @@ import lombok.Data;
  */
 @Data
 public class CourseCreateDTO {
-    @NotBlank(message = "课程代码不能为空")
-    private String courseCode;
     @NotBlank(message = "课程名称不能为空")
-    private String courseName;
+    private String name;
     private String description;
     @NotNull(message = "学分不能为空")
     private Integer credits;
-    @NotBlank(message = "开课学期不能为空")
-    private String semester;
-    @NotBlank(message = "开课学院不能为空")
-    private String department;
-    @NotNull(message = "课程容量不能为空")
-    private Integer capacity;
-    // 教师ID, 教室, 上课时间可以在创建时指定，也可以在排课时指定
+    @NotNull(message = "课时不能为空")
+    private Integer duration;
+    @NotBlank(message = "开始日期不能为空")
+    private String startDate;
+    @NotBlank(message = "结束日期不能为空")
+    private String endDate;
     private Long teacherId;
-    private String classroom;
-    private String scheduleTime;
+    @NotNull(message = "最大学生数不能为空")
+    private Integer maxStudents;
+    @NotBlank(message = "状态不能为空")
+    private String status;
+    private String department;
+    private String semester;
+    private Long categoryId; // 课程分类ID
 }

@@ -36,6 +36,7 @@ export type {
 
 export interface FormExpose {
   setValues: (data: Recordable) => void
+  getValues: () => Recordable
   setProps: (props: Recordable) => void
   delSchema: (field: string) => void
   addSchema: (formSchema: FormSchema, index?: number) => void
@@ -43,6 +44,10 @@ export interface FormExpose {
   formModel: Recordable
   getComponentExpose: (field: string) => any
   getFormItemExpose: (field: string) => any
+  validate: (callback?: Function) => Promise<boolean>
+  validateField: (props: string | string[], callback?: Function) => Promise<boolean>
+  resetFields: () => void
+  clearValidate: (props?: string | string[]) => void
 }
 
 export { Form }

@@ -20,16 +20,21 @@ const loading = ref(false)
 const registerRole = ref('STUDENT')
 
 // --- 动态校验规则 ---
-const validatePass = async (_rule: any, value: any, callback: any) => {
+const validatePass = (_rule: any, value: any, callback: any) => {
   if (value === '') {
     callback(new Error(t('login.checkPassword') + t('common.required')))
   } else {
-    const formData = await getFormData()
-    if (value !== formData.password) {
-      callback(new Error('两次输入的密码不一致!'))
-    } else {
-      callback()
-    }
+    getFormData()
+      .then((formData) => {
+        if (value !== formData.password) {
+          callback(new Error('两次输入的密码不一致!'))
+        } else {
+          callback()
+        }
+      })
+      .catch(() => {
+        callback()
+      })
   }
 }
 
@@ -40,6 +45,7 @@ const rules = computed<FormRules>(() => {
     check_password: [{ validator: validatePass, trigger: 'blur' }],
     name: [required('姓名不能为空')]
   }
+
   if (registerRole.value === 'STUDENT') {
     return {
       ...commonRules,

@@ -206,12 +206,27 @@ public class AdminServiceImpl implements AdminService {
         }
 
         // 2. 更新用户状态
-        // 确保状态值在有效范围内 (0或1)
-        if (dto.getStatus() != 0 && dto.getStatus() != 1) {
-            throw new RuntimeException("无效的用户状态值，只能是0（禁用）或1（启用）");
+        // 确保状态值在有效范围内 (ACTIVE, INACTIVE, SUSPENDED, DELETED)
+        String statusStr = dto.getStatus();
+        Integer status;
+        switch (statusStr) {
+            case "ACTIVE":
+                status = 1;
+                break;
+            case "INACTIVE":
+                status = 0;
+                break;
+            case "SUSPENDED":
+                status = -1;
+                break;
+            case "DELETED":
+                status = -2;
+                break;
+            default:
+                throw new RuntimeException("无效的用户状态值，只能是ACTIVE、INACTIVE、SUSPENDED或DELETED");
         }
 
-        user.setStatus(dto.getStatus());
+        user.setStatus(status);
         int rowsAffected = userMapper.updateById(user);
 
         if (rowsAffected != 1) {
@@ -245,7 +260,7 @@ public class AdminServiceImpl implements AdminService {
         // 手机号在UserCreateByAdminDTO中没有，根据User实体定义，User可以有phone，但此DTO没提供
         // user.setPhone(dto.getPhone()); // DTO中没有phone字段
         user.setRole(dto.getRole().toUpperCase()); // 角色转大写存储
-        user.setStatus(1); // 默认启用
+        user.setStatus(1); // 默认启用 (ACTIVE)
         userMapper.insert(user);
 
         // 获取新创建的User的ID，MyBatis-Plus在insert后会自动回填ID

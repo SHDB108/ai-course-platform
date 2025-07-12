@@ -48,3 +48,11 @@ export type TeacherRegisterType = {
   phone?: string
   email?: string
 }
+
+// 管理员注册请求体类型
+export type AdminRegisterType = {
+  username: string
+  password: string
+  email?: string
+  phone?: string
+}

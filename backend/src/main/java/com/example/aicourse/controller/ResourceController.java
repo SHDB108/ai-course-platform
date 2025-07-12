@@ -84,7 +84,8 @@ public class ResourceController {
                 resultPage.getRecords(),
                 resultPage.getTotal(),
                 resultPage.getSize(),
-                resultPage.getCurrent()
+                resultPage.getCurrent(),
+                resultPage.getPages()
         );
         return Result.ok(pageVO);
     }

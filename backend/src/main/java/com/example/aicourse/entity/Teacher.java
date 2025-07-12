@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @TableName("t_teacher")
 public class Teacher {
     @TableId
-    private Long id; // Can be the same as userId
+    private Long id; // Corresponds to User ID
     private String teacherNo;
     private String name;
     private String department;
@@ -25,4 +25,21 @@ public class Teacher {
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime gmtModified;
+    
+    // 兼容Service层的方法名
+    public LocalDateTime getCreatedAt() {
+        return gmtCreate;
+    }
+    
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.gmtCreate = createdAt;
+    }
+    
+    public LocalDateTime getUpdatedAt() {
+        return gmtModified;
+    }
+    
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.gmtModified = updatedAt;
+    }
 }

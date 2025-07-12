@@ -2,6 +2,7 @@ package com.example.aicourse.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.example.aicourse.dto.auth.AdminRegisterDTO;
 import com.example.aicourse.dto.auth.ForgotPasswordRequestDTO;
 import com.example.aicourse.dto.auth.LoginRequestDTO;
 import com.example.aicourse.dto.auth.PasswordResetDTO;
@@ -125,7 +126,7 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(dto.getEmail());
         user.setPhone(dto.getPhone());
         user.setRole("STUDENT"); // 设置角色为学生
-        user.setStatus(1); // 默认启用
+        user.setStatus(1); // 1=ACTIVE
         userMapper.insert(user);
 
         // 获取新创建的User的ID，MyBatis-Plus在insert后会自动回填ID
@@ -169,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(dto.getEmail());
         user.setPhone(dto.getPhone());
         user.setRole("TEACHER"); // 设置角色为教师
-        user.setStatus(1); // 默认启用
+        user.setStatus(1); // 1=ACTIVE
         userMapper.insert(user);
 
         // 获取新创建的User的ID，MyBatis-Plus在insert后会自动回填ID
@@ -186,6 +187,42 @@ public class AuthServiceImpl implements AuthService {
         BeanUtils.copyProperties(dto, teacher);
         teacherMapper.insert(teacher);
 
+        return user.getId();
+    }
+
+    @Override
+    @Transactional
+    public Long registerAdmin(AdminRegisterDTO dto) {
+        // 1. 检查用户名是否已存在
+        if (userMapper.selectCount(Wrappers.<User>lambdaQuery().eq(User::getUsername, dto.getUsername())) > 0) {
+            throw new RuntimeException("用户名已存在");
+        }
+        
+        // 2. 检查邮箱是否已存在 (如果提供了邮箱)
+        if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            if (userMapper.selectCount(Wrappers.<User>lambdaQuery().eq(User::getEmail, dto.getEmail())) > 0) {
+                throw new RuntimeException("邮箱已存在");
+            }
+        }
+
+        // 3. 创建User实体
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        // 使用 passwordEncoder 加密密码
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setEmail(dto.getEmail());
+        user.setPhone(dto.getPhone());
+        user.setRole("ADMIN"); // 设置角色为管理员
+        user.setStatus(1); // 1=ACTIVE
+        userMapper.insert(user);
+
+        // 获取新创建的User的ID，MyBatis-Plus在insert后会自动回填ID
+        Long newUserId = user.getId();
+        if (newUserId == null) {
+            throw new RuntimeException("创建用户失败，无法获取用户ID");
+        }
+
+        // 管理员不需要创建额外的关联表记录，只需要User表记录即可
         return user.getId();
     }
 
