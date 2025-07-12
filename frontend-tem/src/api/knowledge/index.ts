@@ -11,33 +11,17 @@ export interface KnowledgePointVO {
 }
 
 export interface KnowledgeGraphVO {
-  courseId: number
-  courseName: string
   nodes: {
-    id: string
+    id: number
     name: string
+    type: string
     description: string
-    level: number
-    category: string
-    importance: number
-    difficulty: string
-    prerequisites: string[]
-    relatedResources: string[]
   }[]
   edges: {
-    source: string
-    target: string
-    relationship: string
-    strength: number
-    description: string
+    source: number
+    target: number
+    relation: string
   }[]
-  metadata: {
-    totalNodes: number
-    totalEdges: number
-    maxLevel: number
-    generatedAt: string
-    lastUpdated: string
-  }
 }
 
 export interface KnowledgeGraphGenerationDTO {
@@ -51,23 +35,14 @@ export interface KnowledgeGraphGenerationDTO {
 
 export interface LearningRecommendationVO {
   id: number
-  studentId: number
-  title: string
-  description: string
-  type: 'RESOURCE' | 'PRACTICE' | 'REVIEW' | 'ASSIGNMENT'
-  priority: 'HIGH' | 'MEDIUM' | 'LOW'
-  estimatedTime: number
-  targetKnowledgePoints: string[]
-  relatedResources: {
-    id: number
-    title: string
-    type: string
-    url: string
-  }[]
+  recommendationType: string
+  targetId: number
+  targetName: string
   reason: string
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED'
-  createdAt: string
-  updatedAt: string
+  associatedResource?: {
+    id: number
+    filename: string
+  }
 }
 
 export interface RecommendationGenerationRequestDTO {
@@ -81,8 +56,7 @@ export interface RecommendationGenerationRequestDTO {
 }
 
 export interface RecommendationStatusUpdateDTO {
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED'
-  feedback?: string
+  isDismissed: number
 }
 
 // 知识图谱API
@@ -100,14 +74,25 @@ export const generateKnowledgeGraphApi = (
 }
 
 // 学习推荐API
-export const getLearningRecommendationsApi = (): Promise<IResponse<LearningRecommendationVO[]>> => {
-  return request.get({ url: '/recommendations' })
+export const getLearningRecommendationsApi = (
+  courseId: number,
+  type?: string,
+  count: number = 5
+): Promise<IResponse<LearningRecommendationVO[]>> => {
+  return request.get({
+    url: '/recommendations',
+    params: { courseId, type, count }
+  })
 }
 
 export const generateRecommendationsApi = (
   data: RecommendationGenerationRequestDTO
 ): Promise<IResponse<LearningRecommendationVO[]>> => {
   return request.post({ url: '/recommendations/generate', data })
+}
+
+export const generateMyRecommendationsApi = (courseId: number): Promise<IResponse<string>> => {
+  return request.post({ url: `/recommendations/my-recommendations?courseId=${courseId}` })
 }
 
 export const updateRecommendationStatusApi = (

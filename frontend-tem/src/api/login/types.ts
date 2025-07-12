@@ -12,14 +12,14 @@ export type UserType = {
 }
 
 export type UserInfoType = {
-  userId: string
+  userId: string | number // 支持两种类型，但优先使用string
   username: string
   role: string
 }
 
 export type LoginResponseVO = {
   token: string
-  userId: string
+  userId: string | number // 支持两种类型，但优先使用string
   username: string
   role: string
 }

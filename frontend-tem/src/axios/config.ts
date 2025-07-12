@@ -41,11 +41,15 @@ const defaultResponseInterceptors = (response: AxiosResponse) => {
   } else if (response.data.code === SUCCESS_CODE) {
     return response.data
   } else {
-    ElMessage.error(response?.data?.message)
+    // 即使返回错误，也要返回完整的response.data，让业务层处理
+    console.log('API返回非成功状态码:', response.data.code, response.data.msg)
+    // 不在这里显示错误消息，让业务层处理
+    // ElMessage.error(response?.data?.message)
     if (response?.data?.code === 401) {
       const userStore = useUserStoreWithOut()
       userStore.logout()
     }
+    return response.data
   }
 }
 

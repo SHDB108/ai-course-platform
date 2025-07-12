@@ -5,6 +5,14 @@ import { ElButton, ElTag, ElSelect, ElOption, ElMessage } from 'element-plus'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
+import {
+  getTeacherTasksApi,
+  getTeacherCourseOptionsApi,
+  type TeacherTaskVO,
+  type SimpleCourseVO
+} from '@/api/teacher'
+import { publishTaskApi, unpublishTaskApi } from '@/api/task'
+import { safeUserIdToString, autoCorrectUserId } from '@/utils/userIdUtils'
 
 defineOptions({
   name: 'MyTasks'
@@ -14,8 +22,8 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const loading = ref(false)
-const tableData = ref([])
-const courses = ref([])
+const tableData = ref<TeacherTaskVO[]>([])
+const courses = ref<SimpleCourseVO[]>([])
 const selectedCourse = ref('')
 const pagination = ref({
   current: 1,
@@ -77,13 +85,24 @@ const columns = [
 
 const fetchMyCourses = async () => {
   try {
-    const teacherId = userStore.getUserInfo?.id
-    // TODO: 调用获取教师课程API
-    // const res = await getTeacherCoursesApi(teacherId)
-    // if (res.data) {
-    //   courses.value = res.data
-    // }
+    // 获取并修正用户ID
+    const userInfo = userStore.getUserInfo
+    const rawTeacherId = userInfo?.userId
+    const correctedIdStr = autoCorrectUserId(rawTeacherId || '')
+
+    if (!correctedIdStr || correctedIdStr === '0') {
+      ElMessage.error('未获取到有效的教师信息，请重新登录')
+      return
+    }
+
+    const res = await getTeacherCourseOptionsApi(correctedIdStr)
+    if (res.code === 0 && res.data) {
+      courses.value = res.data
+    } else {
+      ElMessage.warning('获取课程列表失败')
+    }
   } catch (error) {
+    console.error('获取课程列表失败:', error)
     ElMessage.error('获取课程列表失败')
   }
 }
@@ -91,22 +110,39 @@ const fetchMyCourses = async () => {
 const fetchMyTasks = async () => {
   loading.value = true
   try {
-    const teacherId = userStore.getUserInfo?.id
+    // 获取并修正用户ID
+    const userInfo = userStore.getUserInfo
+    const rawTeacherId = userInfo?.userId
+    const correctedIdStr = autoCorrectUserId(rawTeacherId || '')
+
+    if (!correctedIdStr || correctedIdStr === '0') {
+      ElMessage.error('未获取到有效的教师信息，请重新登录')
+      return
+    }
+
     const params = {
       current: pagination.value.current,
       size: pagination.value.size,
       courseId: selectedCourse.value || undefined
     }
 
-    // TODO: 调用获取教师任务API
-    // const res = await getTeacherTasksApi(teacherId, params)
-    // if (res.data) {
-    //   tableData.value = res.data.records
-    //   pagination.value.total = res.data.total
-    // }
-    ElMessage.info('任务数据加载中...')
+    const res = await getTeacherTasksApi(correctedIdStr, params)
+    if (res.code === 0 && res.data) {
+      tableData.value = res.data.records
+      pagination.value.total = res.data.total
+      pagination.value.current = res.data.current
+      pagination.value.size = res.data.size
+      ElMessage.success(`成功加载 ${res.data.records.length} 条任务数据`)
+    } else {
+      ElMessage.warning('获取任务数据失败')
+      tableData.value = []
+      pagination.value.total = 0
+    }
   } catch (error) {
+    console.error('获取任务失败:', error)
     ElMessage.error('获取我的任务失败')
+    tableData.value = []
+    pagination.value.total = 0
   } finally {
     loading.value = false
   }
@@ -133,22 +169,24 @@ const handleViewSubmissions = (row: any) => {
   router.push(`/details/submissions/${row.id}`)
 }
 
-const handlePublish = async (row: any) => {
+const handlePublish = async (row: TeacherTaskVO) => {
   try {
-    // await publishTaskApi(row.id)
+    await publishTaskApi(row.id)
     ElMessage.success('发布成功')
-    fetchMyTasks()
+    row.published = true
   } catch (error) {
+    console.error('发布失败:', error)
     ElMessage.error('发布失败')
   }
 }
 
-const handleUnpublish = async (row: any) => {
+const handleUnpublish = async (row: TeacherTaskVO) => {
   try {
-    // await unpublishTaskApi(row.id)
+    await unpublishTaskApi(row.id)
     ElMessage.success('取消发布成功')
-    fetchMyTasks()
+    row.published = false
   } catch (error) {
+    console.error('取消发布失败:', error)
     ElMessage.error('取消发布失败')
   }
 }

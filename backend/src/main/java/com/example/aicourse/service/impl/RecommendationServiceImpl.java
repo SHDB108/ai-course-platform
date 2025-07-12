@@ -4,7 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.aicourse.dto.knowledge.RecommendationStatusUpdateDTO;
 import com.example.aicourse.entity.LearningRecommendation;
+import com.example.aicourse.entity.KnowledgePoint;
+import com.example.aicourse.entity.KnowledgePointProgress;
 import com.example.aicourse.repository.LearningRecommendationMapper;
+import com.example.aicourse.repository.KnowledgePointMapper;
+import com.example.aicourse.repository.KnowledgePointProgressMapper;
 import com.example.aicourse.service.AnalyticsService;
 import com.example.aicourse.service.LlmService;
 import com.example.aicourse.service.RecommendationService;
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,12 +31,20 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final LearningRecommendationMapper recommendationMapper;
     private final AnalyticsService analyticsService;
     private final LlmService llmService; // 【优化】依赖抽象的LlmService
+    private final KnowledgePointMapper knowledgePointMapper;
+    private final KnowledgePointProgressMapper knowledgePointProgressMapper;
 
     @Autowired
-    public RecommendationServiceImpl(LearningRecommendationMapper recommendationMapper, AnalyticsService analyticsService, LlmService llmService) {
+    public RecommendationServiceImpl(LearningRecommendationMapper recommendationMapper, 
+                                   AnalyticsService analyticsService, 
+                                   LlmService llmService,
+                                   KnowledgePointMapper knowledgePointMapper,
+                                   KnowledgePointProgressMapper knowledgePointProgressMapper) {
         this.recommendationMapper = recommendationMapper;
         this.analyticsService = analyticsService;
         this.llmService = llmService;
+        this.knowledgePointMapper = knowledgePointMapper;
+        this.knowledgePointProgressMapper = knowledgePointProgressMapper;
     }
 
     @Override
@@ -39,15 +52,13 @@ public class RecommendationServiceImpl implements RecommendationService {
     public int generateRecommendationsForStudent(Long studentId, Long courseId) {
         log.info("开始为学生ID: {} 在课程ID: {} 中生成学习推荐。", studentId, courseId);
 
-        // 1. 获取学生表现，找出薄弱点
-        List<KnowledgePointPerformanceVO> performanceList = analyticsService.getKnowledgePointPerformance(courseId, studentId);
-        List<KnowledgePointPerformanceVO> weakPoints = performanceList.stream()
-                .filter(p -> "待加强".equals(p.getMasteryLevel()))
-                .toList();
+        // 1. 直接从knowledge_point_progress表获取学生的薄弱知识点
+        List<KnowledgePointPerformanceVO> weakPoints = getWeakKnowledgePoints(studentId, courseId);
 
         if (weakPoints.isEmpty()) {
-            log.info("学生ID: {} 表现良好，无需生成新的推荐。", studentId);
-            return 0;
+            log.info("学生ID: {} 当前无学习数据或表现良好，生成基础推荐。", studentId);
+            // 为新学生或表现良好的学生生成基础学习推荐
+            return generateBasicRecommendations(studentId, courseId);
         }
 
         // 【优化】不再直接删除旧推荐，而是将未处理的旧推荐标记为“过时”状态 (isDismissed = 2)
@@ -87,6 +98,85 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
         log.info("成功为学生ID: {} 生成了 {} 条新推荐。", studentId, count);
         return count;
+    }
+
+    /**
+     * 为新学生或表现良好的学生生成基础学习推荐
+     */
+    private int generateBasicRecommendations(Long studentId, Long courseId) {
+        log.info("为学生ID: {} 在课程ID: {} 生成基础推荐", studentId, courseId);
+        
+        try {
+            // 标记旧推荐为过时
+            LambdaUpdateWrapper<LearningRecommendation> updateWrapper = Wrappers.<LearningRecommendation>lambdaUpdate()
+                    .eq(LearningRecommendation::getStudentId, studentId)
+                    .eq(LearningRecommendation::getCourseId, courseId)
+                    .eq(LearningRecommendation::getIsDismissed, 0)
+                    .set(LearningRecommendation::getIsDismissed, 2);
+            recommendationMapper.update(null, updateWrapper);
+
+            // 生成通用的学习建议
+            String[] basicRecommendations = {
+                "开始学习本课程的基础知识点，建立扎实的理论基础",
+                "定期复习已学内容，加深理解和记忆",
+                "积极参与课堂讨论，多与同学交流学习心得"
+            };
+
+            int count = 0;
+            for (String recommendation : basicRecommendations) {
+                LearningRecommendation entity = new LearningRecommendation();
+                entity.setStudentId(studentId);
+                entity.setCourseId(courseId);
+                entity.setRecommendationType("GENERAL");
+                entity.setTargetId(null);
+                entity.setReason(recommendation);
+                entity.setIsDismissed(0);
+                
+                recommendationMapper.insert(entity);
+                count++;
+                log.info("已生成基础推荐: {}", recommendation);
+            }
+
+            return count;
+        } catch (Exception e) {
+            log.error("生成基础推荐时发生错误", e);
+            return 0;
+        }
+    }
+
+    /**
+     * 直接从knowledge_point_progress表获取学生的薄弱知识点
+     */
+    private List<KnowledgePointPerformanceVO> getWeakKnowledgePoints(Long studentId, Long courseId) {
+        log.info("从数据库直接获取学生ID: {} 在课程ID: {} 的薄弱知识点", studentId, courseId);
+        
+        // 查询学生在该课程下掌握度为"待加强"的知识点
+        List<KnowledgePointProgress> progressList = knowledgePointProgressMapper.selectList(
+            Wrappers.<KnowledgePointProgress>lambdaQuery()
+                .eq(KnowledgePointProgress::getStudentId, studentId)
+                .eq(KnowledgePointProgress::getCourseId, courseId)
+                .eq(KnowledgePointProgress::getMasteryLevel, "待加强")
+        );
+        
+        if (CollectionUtils.isEmpty(progressList)) {
+            log.info("学生ID: {} 在课程ID: {} 下无薄弱知识点记录", studentId, courseId);
+            return Collections.emptyList();
+        }
+        
+        // 转换为KnowledgePointPerformanceVO
+        return progressList.stream().map(progress -> {
+            // 获取知识点信息
+            KnowledgePoint kp = knowledgePointMapper.selectById(progress.getKnowledgePointId());
+            
+            KnowledgePointPerformanceVO vo = new KnowledgePointPerformanceVO();
+            vo.setKnowledgePointId(progress.getKnowledgePointId());
+            vo.setKnowledgePointName(kp != null ? kp.getName() : "未知知识点");
+            vo.setMasteryLevel(progress.getMasteryLevel());
+            vo.setAverageScore(BigDecimal.valueOf(progress.getMasteryScore()));
+            
+            log.info("找到薄弱知识点: {} (ID: {}), 掌握度: {}", vo.getKnowledgePointName(), vo.getKnowledgePointId(), vo.getMasteryLevel());
+            return vo;
+        }).toList();
     }
 
     private String buildRecommendationPrompt(String knowledgePointName) {

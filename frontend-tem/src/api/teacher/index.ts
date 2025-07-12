@@ -147,3 +147,48 @@ export const exportTeachersApi = (params?: {
 }): Promise<Blob> => {
   return request.get({ url: '/teachers/export', params, responseType: 'blob' })
 }
+
+// ==================== 教师任务管理API ====================
+
+export interface TeacherTaskVO {
+  id: number
+  title: string
+  courseName: string
+  type: string
+  dueDate: string
+  maxScore: number
+  submissionCount: number
+  published: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SimpleCourseVO {
+  id: number
+  name: string
+}
+
+/**
+ * 获取教师的任务列表
+ */
+export const getTeacherTasksApi = (
+  teacherId: string | number,
+  params?: {
+    current?: number
+    size?: number
+    courseId?: string | number
+    type?: string
+    published?: boolean
+  }
+): Promise<IResponse<PageVO<TeacherTaskVO>>> => {
+  return request.get({ url: `/teachers/${teacherId}/tasks`, params })
+}
+
+/**
+ * 获取教师课程简单列表（用于任务筛选）
+ */
+export const getTeacherCourseOptionsApi = (
+  teacherId: string | number
+): Promise<IResponse<SimpleCourseVO[]>> => {
+  return request.get({ url: `/teachers/${teacherId}/courses/options` })
+}

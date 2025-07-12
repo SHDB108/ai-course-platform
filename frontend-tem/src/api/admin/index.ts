@@ -125,7 +125,7 @@ export const createUserByAdminApi = (data: UserCreateByAdminDTO): Promise<IRespo
 /**
  * 删除用户 (管理员) - 暂未实现后端接口
  */
-export const deleteUserApi = (id: number): Promise<IResponse<void>> => {
+export const deleteUserApi = (_id: number): Promise<IResponse<void>> => {
   // TODO: 实现后端删除用户接口
   return Promise.reject(new Error('删除用户功能暂未实现'))
 }

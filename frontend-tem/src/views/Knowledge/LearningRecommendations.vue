@@ -16,10 +16,9 @@ import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import {
   getLearningRecommendationsApi,
-  generateRecommendationsApi,
+  generateMyRecommendationsApi,
   updateRecommendationStatusApi,
   type LearningRecommendationVO,
-  type RecommendationGenerationRequestDTO,
   type RecommendationStatusUpdateDTO
 } from '@/api/knowledge'
 import { getCoursesApi, type CourseVO } from '@/api/course'
@@ -33,60 +32,75 @@ const userStore = useUserStore()
 const loading = ref(false)
 const generateLoading = ref(false)
 const courseLoading = ref(false)
-const recommendations = ref<LearningRecommendationVO[]>([])
+const recommendations = ref<any[]>([])
 const courses = ref<CourseVO[]>([])
+const selectedCourseId = ref<number>()
+
+const mapRecommendationType = (type: string) => {
+  const typeMap: Record<string, string> = {
+    KNOWLEDGE_POINT: 'RESOURCE',
+    REVIEW_MATERIAL: 'REVIEW'
+  }
+  return typeMap[type] || 'RESOURCE'
+}
 
 const generateDialogVisible = ref(false)
-const generateForm = ref<RecommendationGenerationRequestDTO>({
-  studentId: 0,
-  courseId: 0,
-  analysisType: 'COMPREHENSIVE',
-  includeWeakAreas: true,
-  includeAdvancedTopics: false,
-  maxRecommendations: 10,
-  timeConstraint: undefined
-})
+const selectedCourseForGenerate = ref<number>()
 
 const fetchRecommendations = async () => {
+  if (!selectedCourseId.value) return
+
   loading.value = true
   try {
-    const res = await getLearningRecommendationsApi()
+    const res = await getLearningRecommendationsApi(selectedCourseId.value, undefined, 10)
     if (res.data) {
-      recommendations.value = res.data
+      // 转换后端数据为前端格式
+      recommendations.value = res.data.map((item) => ({
+        id: item.id,
+        title: item.targetName || item.recommendationType,
+        description: item.reason,
+        type: mapRecommendationType(item.recommendationType),
+        priority: 'MEDIUM' as const,
+        status: item.associatedResource ? ('PENDING' as const) : ('DISMISSED' as const),
+        reason: item.reason,
+        estimatedTime: 60,
+        targetKnowledgePoints: [item.targetName || ''],
+        relatedResources: item.associatedResource
+          ? [
+              {
+                id: item.associatedResource.id,
+                title: item.associatedResource.filename,
+                type: 'FILE',
+                url: '#'
+              }
+            ]
+          : [],
+        createdAt: new Date().toISOString()
+      }))
     }
   } catch (error) {
     console.error('获取学习推荐失败:', error)
-    ElMessage.warning('后端服务暂时不可用，使用模拟数据')
-    // 使用模拟数据
+    ElMessage.warning('后端服务暂时不可用，显示示例数据')
+    // 使用示例数据
     recommendations.value = [
       {
         id: 1,
         title: 'Vue 3 组合式 API 学习',
         description: '建议学习Vue 3的Composition API，提升前端开发技能',
-        type: 'COURSE',
+        type: 'RESOURCE',
         priority: 'HIGH',
         status: 'PENDING',
         reason: '基于您的学习进度和表现，推荐该课程',
-        estimatedDuration: 120,
-        difficultyLevel: 'INTERMEDIATE',
-        courseId: 1,
-        taskId: null,
-        topicId: null,
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        title: 'TypeScript 基础学习',
-        description: '学习TypeScript的基础语法和类型系统',
-        type: 'TASK',
-        priority: 'MEDIUM',
-        status: 'PENDING',
-        reason: '为提升代码质量和开发效率',
-        estimatedDuration: 90,
-        difficultyLevel: 'BEGINNER',
-        courseId: null,
-        taskId: 2,
-        topicId: null,
+        estimatedTime: 120,
+        targetKnowledgePoints: ['Vue 3', 'Composition API'],
+        relatedResources: [
+          {
+            id: 1,
+            title: 'Vue 3 官方文档',
+            type: 'DOC',
+            url: 'https://vuejs.org'
+          }
+        ],
         createdAt: new Date().toISOString()
       }
     ]
@@ -101,6 +115,11 @@ const fetchCourses = async () => {
     const res = await getCoursesApi({ size: 100 })
     if (res.data) {
       courses.value = res.data.records
+      // 自动选择第一个课程
+      if (courses.value.length > 0 && !selectedCourseId.value) {
+        selectedCourseId.value = courses.value[0].id
+        await fetchRecommendations()
+      }
     }
   } catch (error) {
     ElMessage.error('获取课程列表失败')
@@ -110,34 +129,31 @@ const fetchCourses = async () => {
 }
 
 const handleGenerate = () => {
-  const currentUser = userStore.getUserInfo
-  generateForm.value = {
-    studentId: currentUser?.id || 0,
-    courseId: 0,
-    analysisType: 'COMPREHENSIVE',
-    includeWeakAreas: true,
-    includeAdvancedTopics: false,
-    maxRecommendations: 10,
-    timeConstraint: undefined
-  }
+  selectedCourseForGenerate.value = selectedCourseId.value
   generateDialogVisible.value = true
 }
 
+const handleCourseChange = () => {
+  fetchRecommendations()
+}
+
 const submitGenerate = async () => {
-  if (!generateForm.value.studentId || !generateForm.value.courseId) {
-    ElMessage.error('请选择学生和课程')
+  if (!selectedCourseForGenerate.value) {
+    ElMessage.error('请选择课程')
     return
   }
 
   generateLoading.value = true
   try {
-    const res = await generateRecommendationsApi(generateForm.value)
+    const res = await generateMyRecommendationsApi(selectedCourseForGenerate.value)
     if (res.data) {
-      recommendations.value = res.data
+      ElMessage.success(res.data)
       generateDialogVisible.value = false
-      ElMessage.success('生成学习推荐成功')
+      // 重新获取推荐列表
+      await fetchRecommendations()
     }
   } catch (error) {
+    console.error('生成学习推荐失败:', error)
     ElMessage.error('生成学习推荐失败')
   } finally {
     generateLoading.value = false
@@ -243,7 +259,6 @@ const formatTime = (minutes: number) => {
 }
 
 onMounted(() => {
-  fetchRecommendations()
   fetchCourses()
 })
 </script>
@@ -256,7 +271,29 @@ onMounted(() => {
           <h2 class="text-xl font-bold">个性化学习推荐</h2>
           <p class="text-sm text-gray-500 mt-1">基于AI分析为您量身定制的学习建议</p>
         </div>
-        <el-button type="primary" @click="handleGenerate"> 生成新推荐 </el-button>
+        <el-button type="primary" @click="handleGenerate" :disabled="!selectedCourseId">
+          生成新推荐
+        </el-button>
+      </div>
+
+      <!-- 课程选择 -->
+      <div class="mt-4 flex items-center space-x-4">
+        <span class="font-medium">选择课程:</span>
+        <el-select
+          v-model="selectedCourseId"
+          placeholder="请选择课程"
+          @change="handleCourseChange"
+          style="width: 200px"
+          :loading="courseLoading"
+        >
+          <el-option
+            v-for="course in courses"
+            :key="course.id"
+            :label="course.name"
+            :value="course.id"
+          />
+        </el-select>
+        <el-button @click="fetchRecommendations" :loading="loading"> 刷新推荐 </el-button>
       </div>
     </div>
 
@@ -298,7 +335,7 @@ onMounted(() => {
               }}</p>
             </div>
 
-            <div v-if="recommendation.targetKnowledgePoints.length > 0" class="mb-3">
+            <div v-if="recommendation.targetKnowledgePoints?.length > 0" class="mb-3">
               <div class="text-sm font-medium mb-1">目标知识点:</div>
               <div class="flex flex-wrap gap-1">
                 <ElTag
@@ -312,7 +349,7 @@ onMounted(() => {
               </div>
             </div>
 
-            <div v-if="recommendation.relatedResources.length > 0" class="mb-3">
+            <div v-if="recommendation.relatedResources?.length > 0" class="mb-3">
               <div class="text-sm font-medium mb-1">相关资源:</div>
               <div class="space-y-1">
                 <div
@@ -372,12 +409,12 @@ onMounted(() => {
     </div>
 
     <!-- 生成推荐对话框 -->
-    <ElDialog v-model="generateDialogVisible" title="生成学习推荐" width="600px">
+    <ElDialog v-model="generateDialogVisible" title="生成学习推荐" width="400px">
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium mb-2">课程</label>
+          <label class="block text-sm font-medium mb-2">选择课程</label>
           <el-select
-            v-model="generateForm.courseId"
+            v-model="selectedCourseForGenerate"
             placeholder="请选择课程"
             class="w-full"
             :loading="courseLoading"
@@ -389,46 +426,7 @@ onMounted(() => {
               :value="course.id"
             />
           </el-select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-2">分析类型</label>
-          <el-select v-model="generateForm.analysisType" class="w-full">
-            <el-option label="基于表现分析" value="PERFORMANCE_BASED" />
-            <el-option label="知识薄弱点分析" value="KNOWLEDGE_GAP" />
-            <el-option label="学习路径规划" value="LEARNING_PATH" />
-            <el-option label="综合分析" value="COMPREHENSIVE" />
-          </el-select>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-2">最大推荐数</label>
-            <el-input-number
-              v-model="generateForm.maxRecommendations"
-              :min="1"
-              :max="20"
-              class="w-full"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-2">时间限制(分钟)</label>
-            <el-input-number
-              v-model="generateForm.timeConstraint"
-              :min="10"
-              :max="1440"
-              class="w-full"
-              placeholder="可选"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-2">推荐选项</label>
-          <div class="space-y-2">
-            <el-checkbox v-model="generateForm.includeWeakAreas"> 包含薄弱知识点 </el-checkbox>
-            <el-checkbox v-model="generateForm.includeAdvancedTopics"> 包含进阶主题 </el-checkbox>
-          </div>
+          <div class="text-sm text-gray-500 mt-1">AI将基于您的学习表现生成个性化推荐</div>
         </div>
       </div>
 

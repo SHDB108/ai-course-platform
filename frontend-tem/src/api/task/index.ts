@@ -169,9 +169,44 @@ export const gradeSubmissionApi = (
   return request.put({ url: `/task-submissions/${id}/grade`, data })
 }
 
-export const intelligentGradeApi = (
-  id: number,
-  data: IntelligentGradeRequestDTO
-): Promise<IResponse<IntelligentGradeResultVO>> => {
-  return request.post({ url: `/task-submissions/${id}/intelligent-grade`, data })
+// 学生任务相关接口
+export interface StudentTaskVO {
+  id: number
+  title: string
+  courseName: string
+  type: string
+  dueDate: string
+  maxScore: number
+  score?: number
+  status: string
+  submittedAt?: string
+  submissionId?: number
+}
+
+export interface StudentTaskSummaryStats {
+  total: number
+  pending: number
+  submitted: number
+  graded: number
+  overdue: number
+}
+
+// 获取学生任务列表
+export const getStudentTasksApi = (
+  studentId: string | number,
+  params?: {
+    current?: number
+    size?: number
+    status?: string
+    courseId?: number
+  }
+): Promise<IResponse<PageVO<StudentTaskVO>>> => {
+  return request.get({ url: `/students/${studentId}/tasks`, params })
+}
+
+// 获取学生任务统计数据
+export const getStudentTaskStatsApi = (
+  studentId: string | number
+): Promise<IResponse<StudentTaskSummaryStats>> => {
+  return request.get({ url: `/students/${studentId}/tasks/stats` })
 }

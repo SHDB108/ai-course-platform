@@ -1,0 +1,145 @@
+# ==== 系统文件 ====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==== IDE 配置文件 ====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==== Java 后端 ====
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Java 编译文件
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Spring Boot
+spring-boot.log
+*.log
+
+# ==== 前端 ====
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 前端构建产物
+dist/
+dist-ssr/
+coverage/
+*.local
+
+# ==== 数据库相关 ====
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# ==== 日志文件 ====
+*.log
+logs/
+backend.log
+frontend.log
+spring_boot.log
+
+# ==== 临时文件和测试文件 ====
+# 临时 SQL 文件
+*test*.sql
+*fix*.sql
+*debug*.sql
+*admin*.sql
+*password*.sql
+create_*.sql
+insert_*.sql
+update_*.sql
+delete_*.sql
+recreate_*.sql
+rename_*.sql
+simple-*.sql
+normalize_*.sql
+quick_*.sql
+
+# 临时 Java 文件
+*Test*.java
+*Debug*.java
+*Admin*.java
+*Create*.java
+*Generate*.java
+
+# 临时脚本文件
+*.sh
+test_*.sh
+fix_*.sh
+create_*.sh
+enable_*.sh
+
+# 临时 JavaScript 文件
+*_instructions.js
+
+# 临时 HTML 文件
+test-*.html
+
+# ==== 配置文件 (根据需要调整) ====
+# 环境配置文件 - 如果包含敏感信息应该忽略
+# application-*.yml
+# application-*.properties
+# .env
+# .env.local
+# .env.*.local
+
+# ==== 第三方模板和示例代码 ====
+vue-element-plus-admin-mini*/
+
+# ==== 文档文件 ====
+*.docx
+*.doc
+*.pdf
+
+# ==== 编辑器临时文件 ====
+*.tmp
+*.bak
+*.swp
+*.swo
+*~.nib
+
+# ==== 压缩文件 ====
+*.zip
+*.tar.gz
+*.rar
+
+# ==== 其他 ====
+# OS generated files
+.Trashes
+.fseventsd
+.TemporaryItems
+.DocumentRevisions-V100
+.VolumeIcon.icns
+
+# 保留但忽略变更的重要文件
+CLAUDE.local.md

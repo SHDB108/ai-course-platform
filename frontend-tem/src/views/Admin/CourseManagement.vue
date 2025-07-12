@@ -324,4 +324,12 @@ onMounted(() => {
   </ContentWrap>
 </template>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.table-container {
+  width: 100%;
+
+  :deep(.el-table) {
+    width: 100% !important;
+  }
+}
+</style>

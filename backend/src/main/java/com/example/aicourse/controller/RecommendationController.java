@@ -32,7 +32,7 @@ public class RecommendationController {
      * @return 学习推荐VO列表
      */
     @GetMapping
-    // @PreAuthorize("hasAuthority('STUDENT')") // 启用Spring Security后取消注释
+    @PreAuthorize("hasRole('STUDENT')")
     public Result<List<LearningRecommendationVO>> getMyRecommendations(
             @RequestParam Long courseId,
             @RequestParam(required = false) String type,
@@ -49,7 +49,7 @@ public class RecommendationController {
      * @return 操作结果
      */
     @PostMapping("/generate")
-    // @PreAuthorize("hasAnyAuthority('TEACHER', 'ADMIN')") // 启用Spring Security后取消注释
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public Result<String> generateRecommendationsForStudent(@Valid @RequestBody RecommendationGenerationRequestDTO request) {
         // RecommendationService中的方法应为异步，所以这里会立即返回
         recommendationService.generateRecommendationsForStudent(request.getStudentId(), request.getCourseId());
@@ -63,7 +63,7 @@ public class RecommendationController {
      * @return 操作结果
      */
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT')")
     public Result<Void> updateRecommendationStatus(
             @PathVariable Long id,
             @Valid @RequestBody RecommendationStatusUpdateDTO dto) {
@@ -71,5 +71,18 @@ public class RecommendationController {
         // TODO: 这里应该增加一步校验，确保当前用户是这条推荐的所有者
         recommendationService.updateRecommendationStatus(id, dto);
         return Result.ok();
+    }
+
+    /**
+     * API 11.5: 学生自己生成学习推荐
+     * @param courseId 课程ID
+     * @return 操作结果
+     */
+    @PostMapping("/my-recommendations")
+    @PreAuthorize("hasRole('STUDENT')")
+    public Result<String> generateMyRecommendations(@RequestParam Long courseId) {
+        Long currentUserId = CurrentUserUtil.getCurrentUser().getId();
+        int count = recommendationService.generateRecommendationsForStudent(currentUserId, courseId);
+        return Result.ok("成功生成 " + count + " 条学习推荐");
     }
 }

@@ -41,6 +41,9 @@ public class AuthController {
             LoginResponseVO response = authService.login(request);
             return Result.ok(response);
         } catch (Exception e) {
+            // 记录详细错误信息用于调试
+            System.err.println("Login failed for user: " + request.getUsername() + ", Error: " + e.getMessage());
+            e.printStackTrace();
             // 返回更具体的认证失败信息
             return Result.error("认证失败: 用户名或密码错误");
         }
