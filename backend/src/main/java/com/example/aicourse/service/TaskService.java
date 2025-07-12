@@ -5,6 +5,7 @@ import com.example.aicourse.dto.task.TaskUpdateDTO; // 导入 TaskUpdateDTO
 import com.example.aicourse.entity.Task;
 import com.example.aicourse.vo.PageVO; // 导入 PageVO
 import com.example.aicourse.vo.task.TaskVO; // 导入 TaskVO
+import com.example.aicourse.vo.task.TeacherTaskVO; // 导入 TeacherTaskVO
 import java.util.List; // 导入 List
 
 public interface TaskService extends IService<Task>{
@@ -55,4 +56,17 @@ public interface TaskService extends IService<Task>{
      * @return 更新成功返回true
      */
     boolean updateTaskStatus(Long id, String newStatus);
+
+    /**
+     * 获取教师的任务列表
+     * @param teacherId 教师ID
+     * @param pageNum 当前页码
+     * @param pageSize 每页数量
+     * @param courseId 课程ID过滤 (可选)
+     * @param type 任务类型过滤 (可选)
+     * @param published 发布状态过滤 (可选)
+     * @return 分页的教师任务信息列表
+     */
+    PageVO<TeacherTaskVO> getTeacherTasks(Long teacherId, Long pageNum, Long pageSize, 
+                                          Long courseId, String type, Boolean published);
 }

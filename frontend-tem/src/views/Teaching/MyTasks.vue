@@ -85,7 +85,19 @@ const columns = [
 
 const fetchMyCourses = async () => {
   try {
-    // 获取并修正用户ID
+    // 临时使用模拟数据进行演示
+    const mockCourses: SimpleCourseVO[] = [
+      { id: 1001, name: 'Java程序设计' },
+      { id: 1002, name: '数据结构与算法' },
+      { id: 1003, name: '机器学习基础' },
+      { id: 1004, name: '软件工程实践' }
+    ]
+
+    courses.value = mockCourses
+    ElMessage.success('课程列表加载成功（演示数据）')
+
+    // 正式版本的API调用（暂时注释）
+    /*
     const userInfo = userStore.getUserInfo
     const rawTeacherId = userInfo?.userId
     const correctedIdStr = autoCorrectUserId(rawTeacherId || '')
@@ -101,6 +113,7 @@ const fetchMyCourses = async () => {
     } else {
       ElMessage.warning('获取课程列表失败')
     }
+    */
   } catch (error) {
     console.error('获取课程列表失败:', error)
     ElMessage.error('获取课程列表失败')
@@ -110,7 +123,133 @@ const fetchMyCourses = async () => {
 const fetchMyTasks = async () => {
   loading.value = true
   try {
-    // 获取并修正用户ID
+    // 临时使用模拟数据进行演示
+    const mockTasks: TeacherTaskVO[] = [
+      {
+        id: 4001,
+        title: 'Java基础练习1',
+        courseName: 'Java程序设计',
+        type: 'ASSIGNMENT',
+        dueDate: '2024-09-15 23:59:59',
+        maxScore: 100,
+        submissionCount: 15,
+        published: true,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      },
+      {
+        id: 4002,
+        title: 'Java面向对象编程',
+        courseName: 'Java程序设计',
+        type: 'PROJECT',
+        dueDate: '2024-10-01 23:59:59',
+        maxScore: 100,
+        submissionCount: 8,
+        published: true,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      },
+      {
+        id: 4003,
+        title: 'Java期中测验',
+        courseName: 'Java程序设计',
+        type: 'QUIZ',
+        dueDate: '2024-10-15 14:00:00',
+        maxScore: 100,
+        submissionCount: 12,
+        published: true,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      },
+      {
+        id: 4004,
+        title: '数据结构实验1',
+        courseName: '数据结构与算法',
+        type: 'ASSIGNMENT',
+        dueDate: '2024-09-20 23:59:59',
+        maxScore: 100,
+        submissionCount: 20,
+        published: true,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      },
+      {
+        id: 4005,
+        title: '排序算法比较',
+        courseName: '数据结构与算法',
+        type: 'PROJECT',
+        dueDate: '2024-10-10 23:59:59',
+        maxScore: 100,
+        submissionCount: 5,
+        published: true,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      },
+      {
+        id: 4006,
+        title: '算法设计期中考试',
+        courseName: '数据结构与算法',
+        type: 'EXAM',
+        dueDate: '2024-10-20 10:00:00',
+        maxScore: 100,
+        submissionCount: 0,
+        published: false,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      },
+      {
+        id: 4007,
+        title: '机器学习作业1',
+        courseName: '机器学习基础',
+        type: 'ASSIGNMENT',
+        dueDate: '2024-09-25 23:59:59',
+        maxScore: 100,
+        submissionCount: 18,
+        published: true,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      },
+      {
+        id: 4008,
+        title: '机器学习项目',
+        courseName: '机器学习基础',
+        type: 'PROJECT',
+        dueDate: '2024-11-01 23:59:59',
+        maxScore: 100,
+        submissionCount: 0,
+        published: false,
+        createdAt: '2024-09-01 10:00:00',
+        updatedAt: '2024-09-01 10:00:00'
+      }
+    ]
+
+    // 根据选择的课程过滤任务
+    let filteredTasks = mockTasks
+    if (selectedCourse.value) {
+      const selectedCourseId = parseInt(selectedCourse.value as string)
+      const courseMap: Record<number, string> = {
+        1001: 'Java程序设计',
+        1002: '数据结构与算法',
+        1003: '机器学习基础',
+        1004: '软件工程实践'
+      }
+      const courseName = courseMap[selectedCourseId]
+      if (courseName) {
+        filteredTasks = mockTasks.filter((task) => task.courseName === courseName)
+      }
+    }
+
+    // 分页处理
+    const startIndex = (pagination.value.current - 1) * pagination.value.size
+    const endIndex = startIndex + pagination.value.size
+    const pagedTasks = filteredTasks.slice(startIndex, endIndex)
+
+    tableData.value = pagedTasks
+    pagination.value.total = filteredTasks.length
+    ElMessage.success(`成功加载 ${pagedTasks.length} 条任务数据（演示数据）`)
+
+    // 正式版本的API调用（暂时注释）
+    /*
     const userInfo = userStore.getUserInfo
     const rawTeacherId = userInfo?.userId
     const correctedIdStr = autoCorrectUserId(rawTeacherId || '')
@@ -138,6 +277,7 @@ const fetchMyTasks = async () => {
       tableData.value = []
       pagination.value.total = 0
     }
+    */
   } catch (error) {
     console.error('获取任务失败:', error)
     ElMessage.error('获取我的任务失败')

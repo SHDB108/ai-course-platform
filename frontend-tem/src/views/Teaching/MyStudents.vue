@@ -74,12 +74,26 @@ const columns = [
 
 const fetchMyCourses = async () => {
   try {
-    const teacherId = userStore.getUserInfo?.id
-    // TODO: 调用获取教师课程API
-    // const res = await getTeacherCoursesApi(teacherId)
-    // if (res.data) {
-    //   courses.value = res.data
-    // }
+    // 临时使用模拟数据进行演示
+    const mockCourses = [
+      { id: '', name: '全部课程' },
+      { id: 1001, name: 'Java程序设计' },
+      { id: 1002, name: '数据结构与算法' },
+      { id: 1003, name: '机器学习基础' },
+      { id: 1004, name: '软件工程实践' }
+    ]
+
+    courses.value = mockCourses
+    ElMessage.success('课程列表加载成功（演示数据）')
+
+    // 正式版本的API调用（暂时注释）
+    /*
+    const teacherId = userStore.getUserInfo?.userId
+    const res = await getTeacherCoursesApi(teacherId)
+    if (res.data) {
+      courses.value = res.data
+    }
+    */
   } catch (error) {
     ElMessage.error('获取课程列表失败')
   }
@@ -88,20 +102,157 @@ const fetchMyCourses = async () => {
 const fetchMyStudents = async () => {
   loading.value = true
   try {
-    const teacherId = userStore.getUserInfo?.id
+    // 临时使用模拟数据进行演示
+    const mockStudents = [
+      {
+        id: 2001,
+        name: '张三',
+        studentId: 'S2024001',
+        email: 'zhangsan@example.com',
+        courseName: 'Java程序设计',
+        enrollmentDate: '2024-09-01',
+        progress: 85,
+        lastActiveDate: '2024-07-10',
+        major: '计算机科学与技术',
+        grade: '2024'
+      },
+      {
+        id: 2002,
+        name: '李四',
+        studentId: 'S2024002',
+        email: 'lisi@example.com',
+        courseName: 'Java程序设计',
+        enrollmentDate: '2024-09-01',
+        progress: 72,
+        lastActiveDate: '2024-07-09',
+        major: '软件工程',
+        grade: '2024'
+      },
+      {
+        id: 2003,
+        name: '王五',
+        studentId: 'S2024003',
+        email: 'wangwu@example.com',
+        courseName: 'Java程序设计',
+        enrollmentDate: '2024-09-02',
+        progress: 91,
+        lastActiveDate: '2024-07-11',
+        major: '人工智能',
+        grade: '2023'
+      },
+      {
+        id: 2001,
+        name: '张三',
+        studentId: 'S2024001',
+        email: 'zhangsan@example.com',
+        courseName: '数据结构与算法',
+        enrollmentDate: '2024-09-01',
+        progress: 78,
+        lastActiveDate: '2024-07-10',
+        major: '计算机科学与技术',
+        grade: '2024'
+      },
+      {
+        id: 2004,
+        name: '赵六',
+        studentId: 'S2024004',
+        email: 'zhaoliu@example.com',
+        courseName: '数据结构与算法',
+        enrollmentDate: '2024-09-01',
+        progress: 68,
+        lastActiveDate: '2024-07-08',
+        major: '计算机科学与技术',
+        grade: '2023'
+      },
+      {
+        id: 2005,
+        name: '钱七',
+        studentId: 'S2024005',
+        email: 'qianqi@example.com',
+        courseName: '数据结构与算法',
+        enrollmentDate: '2024-09-02',
+        progress: 83,
+        lastActiveDate: '2024-07-11',
+        major: '软件工程',
+        grade: '2024'
+      },
+      {
+        id: 2003,
+        name: '王五',
+        studentId: 'S2024003',
+        email: 'wangwu@example.com',
+        courseName: '机器学习基础',
+        enrollmentDate: '2024-09-01',
+        progress: 94,
+        lastActiveDate: '2024-07-11',
+        major: '人工智能',
+        grade: '2023'
+      },
+      {
+        id: 2004,
+        name: '赵六',
+        studentId: 'S2024004',
+        email: 'zhaoliu@example.com',
+        courseName: '机器学习基础',
+        enrollmentDate: '2024-09-01',
+        progress: 87,
+        lastActiveDate: '2024-07-08',
+        major: '计算机科学与技术',
+        grade: '2023'
+      },
+      {
+        id: 2005,
+        name: '钱七',
+        studentId: 'S2024005',
+        email: 'qianqi@example.com',
+        courseName: '机器学习基础',
+        enrollmentDate: '2024-09-02',
+        progress: 79,
+        lastActiveDate: '2024-07-11',
+        major: '软件工程',
+        grade: '2024'
+      }
+    ]
+
+    // 根据选择的课程过滤学生
+    let filteredStudents = mockStudents
+    if (selectedCourse.value) {
+      const courseMap: Record<number, string> = {
+        1001: 'Java程序设计',
+        1002: '数据结构与算法',
+        1003: '机器学习基础',
+        1004: '软件工程实践'
+      }
+      const courseName = courseMap[selectedCourse.value as number]
+      if (courseName) {
+        filteredStudents = mockStudents.filter((student) => student.courseName === courseName)
+      }
+    }
+
+    // 分页处理
+    const startIndex = (pagination.value.current - 1) * pagination.value.size
+    const endIndex = startIndex + pagination.value.size
+    const pagedStudents = filteredStudents.slice(startIndex, endIndex)
+
+    tableData.value = pagedStudents
+    pagination.value.total = filteredStudents.length
+    ElMessage.success(`成功加载 ${pagedStudents.length} 名学生数据（演示数据）`)
+
+    // 正式版本的API调用（暂时注释）
+    /*
+    const teacherId = userStore.getUserInfo?.userId
     const params = {
       current: pagination.value.current,
       size: pagination.value.size,
       courseId: selectedCourse.value || undefined
     }
 
-    // TODO: 调用获取教师学生API
-    // const res = await getTeacherStudentsApi(teacherId, params)
-    // if (res.data) {
-    //   tableData.value = res.data.records
-    //   pagination.value.total = res.data.total
-    // }
-    ElMessage.info('学生数据加载中...')
+    const res = await getTeacherStudentsApi(teacherId, params)
+    if (res.data) {
+      tableData.value = res.data.records
+      pagination.value.total = res.data.total
+    }
+    */
   } catch (error) {
     ElMessage.error('获取我的学生失败')
   } finally {

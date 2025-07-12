@@ -74,7 +74,59 @@ const columns = [
 const fetchMyCourses = async () => {
   loading.value = true
   try {
-    const teacherId = userStore.getUserInfo?.id
+    // 临时使用模拟数据进行演示
+    const mockCourses = [
+      {
+        id: 1001,
+        name: 'Java程序设计',
+        description: 'Java编程语言基础与高级特性，包括面向对象编程、集合框架、多线程等',
+        enrolledStudents: 45,
+        maxStudents: 50,
+        status: 'ACTIVE',
+        startDate: '2024-09-01',
+        endDate: '2024-12-31'
+      },
+      {
+        id: 1002,
+        name: '数据结构与算法',
+        description: '计算机科学核心课程，包含各种数据结构和算法的设计与分析',
+        enrolledStudents: 38,
+        maxStudents: 45,
+        status: 'ACTIVE',
+        startDate: '2024-09-01',
+        endDate: '2024-12-31'
+      },
+      {
+        id: 1003,
+        name: '机器学习基础',
+        description: '人工智能入门课程，介绍机器学习基本概念、算法和应用',
+        enrolledStudents: 32,
+        maxStudents: 40,
+        status: 'ACTIVE',
+        startDate: '2024-09-01',
+        endDate: '2024-12-31'
+      },
+      {
+        id: 1004,
+        name: '软件工程实践',
+        description: '软件开发生命周期与项目管理，包括需求分析、设计模式、测试等',
+        enrolledStudents: 0,
+        maxStudents: 35,
+        status: 'DRAFT',
+        startDate: '2024-10-01',
+        endDate: '2025-01-31'
+      }
+    ]
+
+    tableData.value = mockCourses
+    pagination.value.total = mockCourses.length
+    pagination.value.current = 1
+    pagination.value.size = 10
+    ElMessage.success(`成功加载 ${mockCourses.length} 门课程（演示数据）`)
+
+    // 正式版本的API调用（暂时注释）
+    /*
+    const teacherId = userStore.getUserInfo?.userId
     if (teacherId) {
       const params = {
         pageNum: pagination.value.current,
@@ -90,6 +142,7 @@ const fetchMyCourses = async () => {
     } else {
       ElMessage.error('获取用户信息失败')
     }
+    */
   } catch (error: any) {
     console.error('获取我的课程失败:', error)
     ElMessage.error(error?.message || '获取我的课程失败')

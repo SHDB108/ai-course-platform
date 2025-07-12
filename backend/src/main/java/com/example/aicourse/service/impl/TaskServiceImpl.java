@@ -1,5 +1,6 @@
 package com.example.aicourse.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,6 +12,7 @@ import com.example.aicourse.repository.TaskMapper;
 import com.example.aicourse.service.TaskService;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.task.TaskVO;
+import com.example.aicourse.vo.task.TeacherTaskVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -174,5 +176,24 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper,Task> implements Tas
             throw new RuntimeException("更新任务状态失败");
         }
         return true;
+    }
+
+    /**
+     * 获取教师的任务列表
+     */
+    @Override
+    public PageVO<TeacherTaskVO> getTeacherTasks(Long teacherId, Long pageNum, Long pageSize, 
+                                                Long courseId, String type, Boolean published) {
+        Page<TeacherTaskVO> page = new Page<>(pageNum, pageSize);
+        IPage<TeacherTaskVO> taskPage = taskMapper.selectTeacherTasks(page, teacherId, courseId, type, published);
+
+        PageVO<TeacherTaskVO> pageVO = new PageVO<>();
+        pageVO.setRecords(taskPage.getRecords());
+        pageVO.setTotal(taskPage.getTotal());
+        pageVO.setSize(taskPage.getSize());
+        pageVO.setCurrent(taskPage.getCurrent());
+        pageVO.setPages(taskPage.getPages());
+
+        return pageVO;
     }
 }

@@ -7,11 +7,8 @@ import { useRouter, useRoute } from 'vue-router'
 import {
   getTaskSubmissionsApi,
   gradeSubmissionApi,
-  intelligentGradeApi,
   type TaskSubmissionVO,
   type TaskSubmissionGradeDTO,
-  type IntelligentGradeRequestDTO,
-  type IntelligentGradeResultVO,
   type PageVO
 } from '@/api/task'
 
@@ -45,7 +42,7 @@ const aiGradeForm = ref({
   gradingCriteria: '',
   rubric: ''
 })
-const aiGradeResult = ref<IntelligentGradeResultVO>()
+const aiGradeResult = ref()
 
 const columns = [
   {
@@ -157,10 +154,12 @@ const generateAiGrade = async () => {
 
   aiGradeLoading.value = true
   try {
-    const res = await intelligentGradeApi(currentSubmission.value.id, aiGradeForm.value)
-    if (res.data) {
-      aiGradeResult.value = res.data
-    }
+    // TODO: 实现AI批改功能
+    ElMessage.info('AI批改功能开发中...')
+    // const res = await intelligentGradeApi(currentSubmission.value.id, aiGradeForm.value)
+    // if (res.data) {
+    //   aiGradeResult.value = res.data
+    // }
   } catch (error) {
     ElMessage.error('AI批改失败')
   } finally {

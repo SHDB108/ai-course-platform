@@ -21,6 +21,7 @@ import com.example.aicourse.repository.UserMapper;         // 导入 UserMapper
 import com.example.aicourse.service.CourseService;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.course.CourseVO;
+import com.example.aicourse.vo.course.SimpleCourseVO;
 import com.example.aicourse.vo.student.StudentVO; // 导入 StudentVO
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -493,5 +494,26 @@ public class CourseServiceImpl implements CourseService {
         pageVO.setPages((long) Math.ceil((double) totalRecords / pageSize));
 
         return pageVO;
+    }
+
+    /**
+     * 获取教师的课程选项列表（用于下拉选择）
+     */
+    @Override
+    public List<SimpleCourseVO> getTeacherCourseOptions(Long teacherId) {
+        LambdaQueryWrapper<Course> queryWrapper = Wrappers.<Course>lambdaQuery()
+                .eq(Course::getTeacherId, teacherId)
+                .select(Course::getId, Course::getCourseName);
+        
+        List<Course> courses = courseMapper.selectList(queryWrapper);
+        
+        return courses.stream()
+                .map(course -> {
+                    SimpleCourseVO vo = new SimpleCourseVO();
+                    vo.setId(course.getId());
+                    vo.setName(course.getCourseName());
+                    return vo;
+                })
+                .collect(Collectors.toList());
     }
 }

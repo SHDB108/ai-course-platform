@@ -87,7 +87,9 @@ export function autoCorrectUserId(userId: string | number): string {
 
   // 特定的修正规则（已知的错误映射）
   const corrections: Record<string, string> = {
-    '1944013891449208800': '1944013891449208834'
+    '1944013891449208800': '1944013891449208834',
+    '1943658546809905200': '1943658546809905153',
+    '1000000000000000000': '1000000000000000001'
   }
 
   if (corrections[idStr]) {

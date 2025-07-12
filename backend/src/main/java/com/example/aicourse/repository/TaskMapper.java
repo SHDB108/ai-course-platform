@@ -1,7 +1,10 @@
 package com.example.aicourse.repository;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.aicourse.entity.Task;
 import com.example.aicourse.vo.analytics.TaskCompletionSummaryVO;
+import com.example.aicourse.vo.task.TeacherTaskVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -38,4 +41,41 @@ public interface TaskMapper extends BaseMapper<Task>{
             "ORDER BY " +
             "  t.gmt_create DESC")
     List<TaskCompletionSummaryVO> selectTaskCompletionSummary(@Param("courseId") Long courseId);
+
+    /**
+     * 获取教师的任务列表（分页）
+     */
+    @Select("<script>" +
+            "SELECT " +
+            "  t.id, " +
+            "  t.title, " +
+            "  c.course_name AS courseName, " +
+            "  t.type, " +
+            "  t.deadline AS dueDate, " +
+            "  t.max_score AS maxScore, " +
+            "  COALESCE(sub_count.count, 0) AS submissionCount, " +
+            "  CASE WHEN t.status = 'PUBLISHED' THEN true ELSE false END AS published, " +
+            "  t.gmt_create AS createdAt, " +
+            "  t.gmt_modified AS updatedAt " +
+            "FROM t_task t " +
+            "LEFT JOIN t_course c ON t.course_id = c.id " +
+            "LEFT JOIN (" +
+            "  SELECT task_id, COUNT(DISTINCT student_id) as count " +
+            "  FROM t_task_submission " +
+            "  GROUP BY task_id" +
+            ") sub_count ON t.id = sub_count.task_id " +
+            "WHERE c.teacher_id = #{teacherId} " +
+            "<if test='courseId != null'> AND t.course_id = #{courseId} </if>" +
+            "<if test='type != null and type != \"\"'> AND t.type = #{type} </if>" +
+            "<if test='published != null'> " +
+            "  <if test='published == true'> AND t.status = 'PUBLISHED' </if>" +
+            "  <if test='published == false'> AND t.status != 'PUBLISHED' </if>" +
+            "</if>" +
+            "ORDER BY t.gmt_create DESC" +
+            "</script>")
+    IPage<TeacherTaskVO> selectTeacherTasks(Page<TeacherTaskVO> page,
+                                           @Param("teacherId") Long teacherId,
+                                           @Param("courseId") Long courseId,
+                                           @Param("type") String type,
+                                           @Param("published") Boolean published);
 }

@@ -4,12 +4,15 @@ import com.example.aicourse.dto.teacher.TeacherCreateDTO;
 import com.example.aicourse.dto.teacher.TeacherUpdateDTO;
 import com.example.aicourse.service.TeacherService;
 import com.example.aicourse.service.CourseService;
+import com.example.aicourse.service.TaskService;
 import com.example.aicourse.utils.Result;
 import com.example.aicourse.vo.PageVO;
 import com.example.aicourse.vo.teacher.TeacherVO;
 import com.example.aicourse.vo.teacher.TeacherOptionVO;
 import com.example.aicourse.vo.course.CourseVO;
+import com.example.aicourse.vo.course.SimpleCourseVO;
 import com.example.aicourse.vo.student.StudentVO;
+import com.example.aicourse.vo.task.TeacherTaskVO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +28,13 @@ public class TeacherController {
 
     private final TeacherService teacherService;
     private final CourseService courseService;
+    private final TaskService taskService;
 
     @Autowired
-    public TeacherController(TeacherService teacherService, CourseService courseService) {
+    public TeacherController(TeacherService teacherService, CourseService courseService, TaskService taskService) {
         this.teacherService = teacherService;
         this.courseService = courseService;
+        this.taskService = taskService;
     }
 
     /**
@@ -175,6 +180,38 @@ public class TeacherController {
             return Result.error("功能开发中");
         } catch (Exception e) {
             return Result.error("获取教师学生失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取教师的任务列表
+     */
+    @GetMapping("/{id}/tasks")
+    public Result<PageVO<TeacherTaskVO>> getTeacherTasks(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") Long current,
+            @RequestParam(defaultValue = "10") Long size,
+            @RequestParam(required = false) Long courseId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Boolean published) {
+        try {
+            PageVO<TeacherTaskVO> tasks = taskService.getTeacherTasks(id, current, size, courseId, type, published);
+            return Result.ok(tasks);
+        } catch (Exception e) {
+            return Result.error("获取教师任务失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取教师的课程选项列表（用于下拉选择）
+     */
+    @GetMapping("/{id}/courses/options")
+    public Result<List<SimpleCourseVO>> getTeacherCourseOptions(@PathVariable Long id) {
+        try {
+            List<SimpleCourseVO> options = courseService.getTeacherCourseOptions(id);
+            return Result.ok(options);
+        } catch (Exception e) {
+            return Result.error("获取教师课程选项失败：" + e.getMessage());
         }
     }
 
